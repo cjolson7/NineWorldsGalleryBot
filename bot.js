@@ -2,8 +2,8 @@ require('dotenv').config();
 const { Client, Collection, Events, GatewayIntentBits, messageLink, ApplicationCommandPermissionsManager } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
-const data = require('./data.js')
-const postImage = require('./postImage.js').postImage
+const data = require('./data.js');
+const postImage = require('./postImage.js').postImage;
 
 
 const client = new Client({
@@ -76,10 +76,10 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
     //if there wasn't a reply, or wasn't art in the reply, we're still on the ping message - check for an image again before proceeding
     if (artMessage.attachments.size > 0 && artMessage.author.id!=process.env.BOTID) {
 
-      var yesDetected=false //set up emoji tracker variables
-      var spoilerDetected=false
-      var victoriaDetected=false
-      var doneDetected=false
+      var yesDetected=false; //set up emoji tracker variables
+      var spoilerDetected=false;
+      var victoriaDetected=false;
+      var doneDetected=false;
 
       artMessage.reply(data.artResponseMessage).then((botResponse) => {
           botResponse.react('🇾');
@@ -88,18 +88,18 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
           botResponse.react('✅');//bot reacts to its own message with all the emojis
 
           const collectorFilter = (reaction, user) => {//filter for specific emoji and original poster
-            return (reaction.emoji.name === '🇾' || reaction.emoji.name === '🔒' || reaction.emoji.name === '✍️' || reaction.emoji.name === '✅') 
-              && user.id === artMessage.author.id;
+            return (reaction.emoji.name === '🇾' || reaction.emoji.name === '🔒' || reaction.emoji.name === '✍️' || reaction.emoji.name === '✅') &&
+            	user.id === artMessage.author.id;
           };
           const collector = botResponse.createReactionCollector({ filter: collectorFilter, time: data.day, dispose: true}); //bot watches the message for a day (unless stopped by ✅)
           //send a message when you detect the ✅, record detecting the others
           collector.on('collect', async (reaction, user) => {
-            if (!yesDetected && reaction.emoji.name === '🇾') yesDetected=true //use detector vars to know when they're clicked
-            if (!spoilerDetected && reaction.emoji.name === '🔒') spoilerDetected=true
-            if (!victoriaDetected && reaction.emoji.name === '✍️') victoriaDetected=true
+            if (!yesDetected && reaction.emoji.name === '🇾') yesDetected=true; //use detector vars to know when they're clicked
+            if (!spoilerDetected && reaction.emoji.name === '🔒') spoilerDetected=true;
+            if (!victoriaDetected && reaction.emoji.name === '✍️') victoriaDetected=true;
             
             if (!doneDetected && reaction.emoji.name === '✅') {
-              doneDetected=true //this one only reacts the first time and doesn't care if it's removed
+              doneDetected=true; //this one only reacts the first time and doesn't care if it's removed
               collector.stop();//turn off the collector after it receives this emoji
               
               var actualMessage = data.noMessage; //default is no
@@ -108,22 +108,22 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
               
               //if yes, post the art to all relevant channels!
               if(yesDetected){
-                const galleryChannel = client.channels.cache.get(process.env.GALLERYCHANNELID) //get gallery channel
-                var postingChannels = [galleryChannel]//gallery is the default
+                const galleryChannel = client.channels.cache.get(process.env.GALLERYCHANNELID); //get gallery channel
+                var postingChannels = [galleryChannel];//gallery is the default
                 if(victoriaDetected) {//it it's being used, get other channel from id and add it to the list
-                  const victoriaChannel = client.channels.cache.get(process.env.VICTORIACHANNELID) 
-                  postingChannels.push(victoriaChannel)
+                  const victoriaChannel = client.channels.cache.get(process.env.VICTORIACHANNELID); 
+                  postingChannels.push(victoriaChannel);
                 }
-                await postImage(artMessage, postingChannels, spoilerDetected) //post to channels!
+                await postImage(artMessage, postingChannels, spoilerDetected); //post to channels!
               }
 
             }
           });
 
           collector.on('remove', (reaction, user) => {
-            if (yesDetected && reaction.emoji.name === '🇾') yesDetected=false //toggle detector vars on remove
-            if (spoilerDetected && reaction.emoji.name === '🔒') spoilerDetected=false
-            if (victoriaDetected && reaction.emoji.name === '✍️') victoriaDetected=false
+            if (yesDetected && reaction.emoji.name === '🇾') yesDetected=false; //toggle detector vars on remove
+            if (spoilerDetected && reaction.emoji.name === '🔒') spoilerDetected=false;
+            if (victoriaDetected && reaction.emoji.name === '✍️') victoriaDetected=false;
           });
           
           collector.on('end', collected => {//log count at the end and reset counters
@@ -131,6 +131,6 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
           });
         });
       }
-    else pingChannel.send("Sorry, I don't see any images there for me to record.") //catch case for no images found in ping message or reply
+    else pingChannel.send(data.noImageMessage); //catch case for no images found in ping message or reply
   }
-})
+});
