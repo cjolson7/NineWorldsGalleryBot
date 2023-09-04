@@ -4,7 +4,7 @@ module.exports = {
         //You can update the title and description in the gallery later if you need to.\n\n
     	'When you\'re done telling me things, just use ✅.',
     noMessage: "Okay, I won't post it to the gallery. Thanks for telling me!",
-    noImageMessaeg: "Sorry, I don't see any images there for me to record.",
+    noImageMessage: "Sorry, I don't see any images there for me to record.",
     yesMessage: (spoiler, victoria)=>{ //posting message is dependent on the spoiler and victoria toggles
         var yesMessage = "Got it! I'll post it right away"; //basic text
         if (spoiler||victoria) yesMessage += ", and I'll be sure to "; //extension
