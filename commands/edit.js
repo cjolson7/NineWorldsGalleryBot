@@ -26,14 +26,10 @@ module.exports = {
 		var fields = link.split('/')//discord links are a series of ids separated by slashes - discord/server/channel/message
 		const messageId = fields.pop(); //id is the last field 
 		const channelId = fields.pop(); //channel is the next to last
-		const client = new Client({intents: [
-			GatewayIntentBits.Guilds,
-			GatewayIntentBits.GuildMessages,
-			GatewayIntentBits.MessageContent,
-			]})
-		const channel = await client.channels.cache.get(channelId); //get channel
+
+		const channel = await interaction.client.channels.cache.get(channelId); //get channel
 		console.log(channel.id)
-		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
+		const post = await interaction.client.channel.messages.fetch(messageId); //get post  //link error handling needed!
 		console.log(message.id)
 
 		//compare interaction.user.id to author id
