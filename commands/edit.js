@@ -52,9 +52,7 @@ module.exports = {
 			return //end
 // '2023-09-04T17:04:43.489000+00:00',
 		} else {
-			console.log(embedData)
-			var timestamp = moment(embedData.timestamp).valueOf()//parse, convert to unix stamp then date obj
-			console.log(timestamp)
+			const timestamp = moment(embedData.timestamp).valueOf()//parse and convert to unix stamp
 			const newEmbed = new EmbedBuilder()//preserve old data
 				.setColor(embedData.color)
 				.setTimestamp(timestamp)
@@ -65,8 +63,6 @@ module.exports = {
 			else if (embedData.title) {newEmbed.setTitle(embedData.title)}//embed might not have a title, set if it does
 			if(description.length>0){newEmbed.setDescription(description);} //set description
 			else {newEmbed.setDescription(embedData.description)}
-
-			console.log(newEmbed)
 
 			post.edit({ embeds: [newEmbed] });//edit embed
 
