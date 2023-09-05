@@ -53,7 +53,7 @@ module.exports = {
 // '2023-09-04T17:04:43.489000+00:00',
 		} else {
 			console.log(embedData)
-			var timestamp = moment(embedData.timestamp).toISOString()
+			var timestamp = Date(moment(embedData.timestamp).valueOf())//parse, convert to unix stamp then date obj
 			console.log(timestamp)
 			const newEmbed = new EmbedBuilder()//preserve old data
 				.setColor(embedData.color)
