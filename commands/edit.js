@@ -76,8 +76,7 @@ module.exports = {
 			const newEmbed = new EmbedBuilder()//preserve old data
 				.setColor(embedData.color)
 				.setTimestamp(timestamp)
-				//.setAuthor(embedData.author)
-				.setFields(embedData.fields[0]);
+				.setFields(embedData.fields);
 
 			if(title.length>0){ newEmbed.setTitle(title)} //set title
 			else if (embedData.title) {newEmbed.setTitle(embedData.title)}//embed might not have a title, set if it does
