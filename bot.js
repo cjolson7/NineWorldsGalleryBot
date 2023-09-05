@@ -61,7 +61,7 @@ client.on("ready", () => {//when the bot first logs in
 
 client.on("messageCreate", async pingMessage => {//respond to messages where the bot is pinged and there is art
 
-  if(pingMessage.mentions.has(process.env.BOTID) && pingMessage.guildId === process.env.guildid){//if bot is mentioned and it's the right server
+  if(pingMessage.mentions.has(process.env.BOTID)){//if bot is mentioned
 
     var pingChannel = pingMessage.channel; //the channel it was pinged in
     var repliedTo = pingMessage.reference; //the referenced (replied to) message if any

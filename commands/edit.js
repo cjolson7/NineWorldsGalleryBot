@@ -21,7 +21,6 @@ module.exports = {
 			.setMaxLength(4096)
 			.setRequired(false)),
 	async execute(interaction) {
-		if (interaction.guildId != process.env.guildId) return//cancel if wrong server	
 
 		//parse link and channel to get message
 		const link = interaction.options.getString('link');
