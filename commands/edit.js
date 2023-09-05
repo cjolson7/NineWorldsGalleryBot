@@ -30,7 +30,7 @@ module.exports = {
 		const channel = await interaction.client.channels.cache.get(channelId); //get channel
 		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
 
-		var embedData = post.embeds[0]//original embed data 
+		var embedData = post.embeds[0].data//original embed data 
 		console.log(embedData.fields[0])
 		if (!embedData.fields[0].value.includes(interaction.user.id)) {//compare interaction.user.id to author id - only the author in the embed can make the edit
 			await interaction.reply({//failure response
