@@ -1,5 +1,6 @@
 const {EmbedBuilder } = require('discord.js');
 require('dotenv').config();
+const data = require('./data.js');
 
 async function postImage(artMessage, postingChannels, spoiler){
 
@@ -21,15 +22,37 @@ async function postImage(artMessage, postingChannels, spoiler){
             filename = urlPieces.pop();
             if (spoiler && !filename.startsWith("SPOILER_")){// if it needs to be spoilered and isn't already
                 filename = "SPOILER_" + filename; }//add spoiler flag to image name
+
+            const artLink = [data.linkStart,
+                process.env.GUILDID, 
+                artMessage.channel.id, 
+                artMessage.id].join("/") //create link to original post
+            console.log(artLink)
         
             //create attachable image and embedded data
             const embed = new EmbedBuilder() //embed posts tagged data, making the gallery entry nice and clean and updatable as needed
                 .setColor("#d81b0e")//discord win red
-                //.setTitle('Some title')
-                //.setAuthor({ name: artMessage.author.displayName })//credit to OP
+                .setURL(artLink)//url to original
                 .setDescription(messageContent.length > 0 ? messageContent : "Some amazing fanart!")//posting message of the art or default
-                .addFields({ name: "Artist", value: `<@${artistId}>` })//the author's discord id
+                .addFields({ name: "Artist", value: `<@${artistId}>` },)//the author's discord id
                 .setTimestamp(artMessage.createdTimestamp);//timestamp of original post
+
+            // for (let i = 0; i < postingChannels.length; i++) {
+                
+            //     if(i>0){
+            //     //add link to embed as field
+            //     }
+            //     await postingChannels[i].send({ //post to gallery!
+            //                 embeds: [embed], 
+            //                 files: [{
+            //                     attachment:imageUrl,
+            //                     name: filename}] 
+            //             }).then((sent)={
+            //                 if(i===0 && postingChannels.length>1){//if it's the first loop and there are others
+            //                 const sentId = sent.id}//make a link to the sent message
+            //             }) //having trouble accessing i in this scope
+
+            // }
 
             await postingChannels.forEach(async (channel)=>{//send to each selected channel
                 await channel.send({ //content: "string", //content of the message itself, ie, i'm posting art!

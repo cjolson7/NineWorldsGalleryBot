@@ -14,5 +14,6 @@ module.exports = {
         yesMessage +="!"; //end
         return yesMessage;
     },
-    day: 24*60*60*1000//24 hours in milliseconds
+    day: 24*60*60*1000,//24 hours in milliseconds
+    linkStart: "https://discord.com/channels"
 };
