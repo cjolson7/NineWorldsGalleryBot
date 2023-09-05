@@ -34,25 +34,18 @@ module.exports = {
 		return //end 
 		}
 
+		//parse link and get post
 		[messageId, channelId] = data.parseLink(link);
-
-		//channel should be one of the two gallery channels
-		const galleryChannels = [process.env.VICTORIACHANNELID,  process.env.GALLERYCHANNELID]
-		if(!(galleryChannels.includes(channelId))){
-			await interaction.reply({//failure response
-				content: "I'm sorry, but I can only edit art that is in my galleries.",
-				ephemeral: true
-			});
-			return //end 
-		}
-
 		const channel = await interaction.client.channels.cache.get(channelId); //get channel
 		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
 
-		//poster of the message being edited should be the bot
-		if(post.author.id != process.env.BOTID){
+		//get gallery channels
+		const galleryChannels = [process.env.VICTORIACHANNELID,  process.env.GALLERYCHANNELID]
+
+		//channel should be a gallery channel and poster should be the bot
+		if(post.author.id != process.env.BOTID || !(galleryChannels.includes(channelId))){
 			await interaction.reply({//failure response
-				content: "I'm sorry, but I can only edit art that I curated.",
+				content: "I'm sorry, but I can only edit art that I've posted in my galleries.",
 				ephemeral: true
 			});
 			return //end
