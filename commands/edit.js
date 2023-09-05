@@ -28,8 +28,26 @@ module.exports = {
 		const messageId = fields.pop(); //id is the last field 
 		const channelId = fields.pop(); //channel is the next to last
 
+		//channel should be one of the two gallery channels
+		if(![process.env.VICTORIACHANNELID,  process.envGALLERYCHANNELID].includes(channelId)){
+			await interaction.reply({//failure response
+				content: "I'm sorry, but I can only edit art that is in my galleries.",
+				ephemeral: true
+			});
+			return //end
+		}
+
 		const channel = await interaction.client.channels.cache.get(channelId); //get channel
 		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
+
+		//poster of the message being edited should be the bot
+		if(post.author.id != process.env.BOTID){
+			await interaction.reply({//failure response
+				content: "I'm sorry, but it looks like that's not one of my pieces.",
+				ephemeral: true
+			});
+			return //end
+		}
 
 		var embedData = post.embeds[0].data//original embed data 
 		if (!embedData.fields[0].value.includes(interaction.user.id)) {//compare interaction.user.id to author id - only the author in the embed can make the edit
@@ -50,7 +68,7 @@ module.exports = {
 				ephemeral: true
 			});
 			return //end
-// '2023-09-04T17:04:43.489000+00:00',
+
 		} else {
 			const timestamp = moment(embedData.timestamp).valueOf()//parse and convert to unix stamp
 			const newEmbed = new EmbedBuilder()//preserve old data
