@@ -62,7 +62,7 @@ module.exports = {
 				.setFields(embedData.fields[0]);
 
 			if(title.length>0){ newEmbed.setTitle(title)} //set title
-			else {newEmbed.setTitle(embedData.title)}
+			else if (embedData.title) {newEmbed.setTitle(embedData.title)}//embed might not have a title, set if it does
 			if(description.length>0){newEmbed.setDescription(description);} //set description
 			else {newEmbed.setDescription(embedData.description)}
 
