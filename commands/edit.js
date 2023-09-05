@@ -50,10 +50,10 @@ module.exports = {
 				ephemeral: true
 			});
 			return //end
-
+// '2023-09-04T17:04:43.489000+00:00',
 		} else {
 			console.log(embedData)
-			console.log(moment(embedData.timestamp, "x"))
+			console.log(moment(embedData.timestamp))
 			const newEmbed = new EmbedBuilder()//preserve old data
 				.setColor(embedData.color)
 				.setTimestamp(embedData.timestamp)
