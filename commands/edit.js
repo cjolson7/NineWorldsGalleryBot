@@ -56,7 +56,7 @@ module.exports = {
 			const newEmbed = new EmbedBuilder()//preserve old data
 				.setColor(embedData.color)
 				.setTimestamp(timestamp)
-				.setAuthor(embedData.author)
+				//.setAuthor(embedData.author)
 				.setFields(embedData.fields[0]);
 
 			if(title.length>0){ newEmbed.setTitle(title)} //set title

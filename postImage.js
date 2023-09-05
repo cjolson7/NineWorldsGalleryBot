@@ -26,7 +26,7 @@ async function postImage(artMessage, postingChannels, spoiler){
             const embed = new EmbedBuilder() //embed posts tagged data, making the gallery entry nice and clean and updatable as needed
                 .setColor("#d81b0e")//discord win red
                 //.setTitle('Some title')
-                .setAuthor({ name: artMessage.author.displayName })//credit to OP
+                //.setAuthor({ name: artMessage.author.displayName })//credit to OP
                 .setDescription(messageContent.length > 0 ? messageContent : "Some amazing fanart!")//posting message of the art or default
                 .addFields({ name: "Artist", value: `<@${artistId}>` })//the author's discord id
                 .setTimestamp(artMessage.createdTimestamp);//timestamp of original post
