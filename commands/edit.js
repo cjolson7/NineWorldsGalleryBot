@@ -24,7 +24,6 @@ module.exports = {
 
 		//parse link and channel to get message
 		const link = interaction.options.getString('link');
-		[messageId, channelId] = data.parseLink(link);
 
 		//i'm sorry, that doesn't seem to be a link
 		if(!(link.startsWith("https://discord.com/channels/"))){//not a discord link
@@ -34,6 +33,8 @@ module.exports = {
 		});
 		return //end 
 		}
+
+		[messageId, channelId] = data.parseLink(link);
 
 		//channel should be one of the two gallery channels
 		const galleryChannels = [process.env.VICTORIACHANNELID,  process.env.GALLERYCHANNELID]
