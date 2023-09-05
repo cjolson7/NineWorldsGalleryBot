@@ -31,6 +31,7 @@ module.exports = {
 		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
 
 		var embedData = post.embeds[0]//original embed data 
+		console.log(embedData.fields[0])
 		if (!embedData.fields[0].value.includes(interaction.user.id)) {//compare interaction.user.id to author id - only the author in the embed can make the edit
 			await interaction.reply({//failure response
 				content: "I'm sorry, but you can only edit art that you originally posted.",
@@ -52,9 +53,17 @@ module.exports = {
 
 		} else {
 			console.log(embedData)
+			const newEmbed = new EmbedBuilder()//preserve old data
+				.setColor(embedData.color)
+				.setTimestamp(embedData.timestamp)
+				.setAuthor(embedData.setAuthor)
+				.setFields(embedData.fields[0])
 
-			if(title.length>0){ embed.setTitle(title)} //change title
-			if(description.length>0){embed.setDescription(description);} //change description
+			if(title.length>0){ newEmbed.setTitle(title)} //set title
+			else {newEmbed.setTitle(embedData.title)}
+			if(description.length>0){embed.setDescription(description);} //set description
+			else {newEmbed.setDescription(embedData.description)}
+			
 			post.edit({ embeds: [embed] });//edit embed
 
 			await interaction.reply({//success response
