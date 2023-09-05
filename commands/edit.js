@@ -29,12 +29,12 @@ module.exports = {
 		const channelId = fields.pop(); //channel is the next to last
 
 		//channel should be one of the two gallery channels
-		if(![process.env.VICTORIACHANNELID,  process.envGALLERYCHANNELID].includes(channelId)){
+		if(!([process.env.VICTORIACHANNELID,  process.envGALLERYCHANNELID].includes(channelId))){
 			await interaction.reply({//failure response
 				content: "I'm sorry, but I can only edit art that is in my galleries.",
 				ephemeral: true
 			});
-			return //end
+			return //endgit 
 		}
 
 		const channel = await interaction.client.channels.cache.get(channelId); //get channel
