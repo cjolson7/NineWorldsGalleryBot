@@ -26,6 +26,7 @@ module.exports = {
 		var fields = link.split('/')//discord links are a series of ids separated by slashes - discord/server/channel/message
 		const messageId = fields.pop(); //id is the last field 
 		const channelId = fields.pop(); //channel is the next to last
+		const client = new Client;
 		const channel = client.channels.cache.get(channelId); //get channel
 		const post = await channel.messages.fetch(messageId); //get post
 
