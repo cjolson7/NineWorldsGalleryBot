@@ -63,8 +63,8 @@ module.exports = {
 			else {newEmbed.setTitle(embedData.title)}
 			if(description.length>0){embed.setDescription(description);} //set description
 			else {newEmbed.setDescription(embedData.description)}
-			
-			post.edit({ embeds: [embed] });//edit embed
+
+			post.edit({ embeds: [newEmbed] });//edit embed
 
 			await interaction.reply({//success response
 				content: `Alright, how does that look? ${link}`,
