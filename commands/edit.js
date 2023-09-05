@@ -31,10 +31,10 @@ module.exports = {
 			GatewayIntentBits.GuildMessages,
 			GatewayIntentBits.MessageContent,
 			]})
-		const channel = client.channels.cache.get(channelId); //get channel
-		console.log(channel)
+		const channel = await client.channels.cache.get(channelId); //get channel
+		console.log(channel.id)
 		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
-		console.log(message.content)
+		console.log(message.id)
 
 		//compare interaction.user.id to author id
 		console.log(interaction.user.id)
