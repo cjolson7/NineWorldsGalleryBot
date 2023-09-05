@@ -19,7 +19,8 @@ module.exports = {
 			.setMinLength(1)
 			.setMaxLength(4096)
 			.setRequired(false)),
-	async execute(interaction) {	
+	async execute(interaction) {
+		if (interaction.guildId != process.env.guildId) return//cancel if wrong server	
 
 		//parse link and channel to get message
 		const link = interaction.options.getString('link');
@@ -44,7 +45,7 @@ module.exports = {
 		//poster of the message being edited should be the bot
 		if(post.author.id != process.env.BOTID){
 			await interaction.reply({//failure response
-				content: "I'm sorry, but I can only edit things that I reposted.",
+				content: "I'm sorry, but I can only edit art that I curated.",
 				ephemeral: true
 			});
 			return //end
