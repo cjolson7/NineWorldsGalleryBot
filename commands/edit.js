@@ -30,8 +30,8 @@ module.exports = {
 		const channel = await interaction.client.channels.cache.get(channelId); //get channel
 		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
 
-		var embed = post.embeds[0]//original embed data 
-		if (!embed.fields[0].value.includes(interaction.user.id)) {//compare interaction.user.id to author id - only the author in the embed can make the edit
+		var embedData = post.embeds[0]//original embed data 
+		if (!embedData.fields[0].value.includes(interaction.user.id)) {//compare interaction.user.id to author id - only the author in the embed can make the edit
 			await interaction.reply({//failure response
 				content: "I'm sorry, but you can only edit art that you originally posted.",
 				ephemeral: true
@@ -51,6 +51,8 @@ module.exports = {
 			return //end
 
 		} else {
+			console.log(embedData)
+
 			if(title.length>0){ embed.setTitle(title)} //change title
 			if(description.length>0){embed.setDescription(description);} //change description
 			post.edit({ embeds: [embed] });//edit embed
