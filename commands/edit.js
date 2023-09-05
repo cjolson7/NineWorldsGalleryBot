@@ -32,7 +32,9 @@ module.exports = {
 			GatewayIntentBits.MessageContent,
 			]})
 		const channel = client.channels.cache.get(channelId); //get channel
-		const post = await channel.messages.fetch(messageId); //get post
+		console.log(channel)
+		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
+		console.log(message.content)
 
 		//compare interaction.user.id to author id
 		console.log(interaction.user.id)
