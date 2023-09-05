@@ -1,5 +1,6 @@
 require('dotenv').config();
-const { SlashCommandBuilder, EmbedBuilder, Client, GatewayIntentBits } = require('discord.js');
+const moment = require('moment');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -52,16 +53,19 @@ module.exports = {
 
 		} else {
 			console.log(embedData)
+			console.log(moment(embedData.timestamp, "x"))
 			const newEmbed = new EmbedBuilder()//preserve old data
 				.setColor(embedData.color)
 				.setTimestamp(embedData.timestamp)
 				.setAuthor(embedData.author)
-				.setFields(embedData.fields[0])
+				.setFields(embedData.fields[0]);
 
 			if(title.length>0){ newEmbed.setTitle(title)} //set title
 			else {newEmbed.setTitle(embedData.title)}
 			if(description.length>0){newEmbed.setDescription(description);} //set description
 			else {newEmbed.setDescription(embedData.description)}
+
+			console.log(newEmbed)
 
 			post.edit({ embeds: [newEmbed] });//edit embed
 

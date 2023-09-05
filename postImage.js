@@ -1,7 +1,5 @@
-const {AttachmentBuilder, EmbedBuilder } = require('discord.js');
-const { url } = require('node:inspector');
+const {EmbedBuilder } = require('discord.js');
 require('dotenv').config();
-const path = require('node:path');
 
 async function postImage(artMessage, postingChannels, spoiler){
 
