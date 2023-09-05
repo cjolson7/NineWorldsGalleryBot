@@ -34,11 +34,22 @@ module.exports = {
 		return //end 
 		}
 
-		//parse link and get post
+		//parse link and get channel
 		[messageId, channelId] = data.parseLink(link);
 		const channel = await interaction.client.channels.cache.get(channelId); //get channel
-		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
 
+		//link channel should be one it has access to
+		if(!channel.viewable){
+			await interaction.reply({//failure response
+				content: "I'm sorry, but that link goes somewhere I cannot.",
+				ephemeral: true
+			});
+			return //end
+		}
+
+		//get post 
+		const post = await channel.messages.fetch(messageId);
+		
 		//get gallery channels
 		const galleryChannels = [process.env.VICTORIACHANNELID,  process.env.GALLERYCHANNELID]
 
