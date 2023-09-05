@@ -26,6 +26,15 @@ module.exports = {
 		const link = interaction.options.getString('link');
 		[messageId, channelId] = data.parseLink(link);
 
+		//i'm sorry, that doesn't seem to be a link
+		if(!(link.startsWith("https://discord.com/channels/"))){//not a discord link
+		await interaction.reply({//failure response
+			content: "I'm sorry, but I don't recognize that link.",
+			ephemeral: true
+		});
+		return //end 
+		}
+
 		//channel should be one of the two gallery channels
 		const galleryChannels = [process.env.VICTORIACHANNELID,  process.env.GALLERYCHANNELID]
 		if(!(galleryChannels.includes(channelId))){
