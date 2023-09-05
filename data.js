@@ -19,5 +19,11 @@ module.exports = {
             guild,
             channel,
             message].join("/"); //discord links have a standard format
+    },
+    parseLink: (link)=>{
+        var fields = link.split('/')//discord links are a series of ids separated by slashes - discord/server/channel/message
+		const messageId = fields.pop(); //id is the last field 
+		const channelId = fields.pop(); //channel is the next to last
+        return [messageId, channelId];
     }
 };

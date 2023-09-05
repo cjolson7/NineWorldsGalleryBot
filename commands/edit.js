@@ -1,5 +1,6 @@
 require('dotenv').config();
 const moment = require('moment');
+const data = require('../data.js');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
@@ -24,10 +25,7 @@ module.exports = {
 
 		//parse link and channel to get message
 		const link = interaction.options.getString('link');
-		
-		var fields = link.split('/')//discord links are a series of ids separated by slashes - discord/server/channel/message
-		const messageId = fields.pop(); //id is the last field 
-		const channelId = fields.pop(); //channel is the next to last
+		[messageId, channelId] = data.parseLink(link);
 
 		//channel should be one of the two gallery channels
 		const galleryChannels = [process.env.VICTORIACHANNELID,  process.env.GALLERYCHANNELID]
@@ -71,7 +69,7 @@ module.exports = {
 			});
 			return //end
 
-		} else {
+		} else {//actually edit
 			const timestamp = moment(embedData.timestamp).valueOf()//parse and convert to unix stamp
 			const newEmbed = new EmbedBuilder()//preserve old data
 				.setColor(embedData.color)
@@ -84,6 +82,26 @@ module.exports = {
 			else {newEmbed.setDescription(embedData.description)}
 
 			post.edit({ embeds: [newEmbed] });//edit embed
+
+			//check if there is a crosspost
+			const linkField = newEmbed.data.fields.find(f => f.name === "Links").value;
+			if(linkField.includes("Gallery")){//Original or Original / (Victoria's) Gallery
+				//get the corresponding post from the links
+				var crossLink = linkField.split("(").pop();//get link
+				console.log(crossLink)
+				crossLink = crossLink.replace(")","")//trim end
+				console.log(crossLink)
+				const [crossMessageId, crossChannelId] = data.parseLink(crossLink);
+
+				const crossChannel = await interaction.client.channels.cache.get(crossChannelId); //get channel
+				const crossPost = await crossChannel.messages.fetch(crossMessageId); //get post
+
+				//get links field from crossPost to use in embed 
+				const crossLinkData = crossPost.embeds[0].fields.find(f => f.name === "Links").value;	
+				newEmbed.data.fields.find(f => f.name === "Links").value = crossLinkData;
+
+				crossPost.edit({ embeds: [newEmbed] });//edit crosspost
+			}
 
 			await interaction.reply({//success response
 				content: `Alright, how does that look? ${link}`,
