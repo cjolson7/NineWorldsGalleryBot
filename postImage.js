@@ -25,7 +25,6 @@ async function postImage(artMessage, postingChannels, spoiler){
                 filename = "SPOILER_" + filename; }//add spoiler flag to image name
         
             //create attachable image and embedded data
-            const image = new AttachmentBuilder(imageUrl);
             const embed = new EmbedBuilder() //embed posts tagged data, making the gallery entry nice and clean and updatable as needed
                 .setColor("#d81b0e")//discord win red
                 //.setTitle('Some title')
