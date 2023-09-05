@@ -30,34 +30,32 @@ module.exports = {
 		const channel = await interaction.client.channels.cache.get(channelId); //get channel
 		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
 
-		//compare interaction.user.id to author id
-		console.log(interaction.user.id)
-		console.log(post.embeds[0].fields) //see how it parses
-		//I'm sorry, but you can only edit art that you originally posted.
-			//return if error!
+		var embed = post.embeds[0]//original embed data 
+		if (!embed.fields[0].value.includes(interaction.user.id)) {//compare interaction.user.id to author id - only the author in the embed can make the edit
+			await interaction.reply({//failure response
+				content: "I'm sorry, but you can only edit art that you originally posted.",
+				ephemeral: true
+			});
+			return //end
+		}
 
 		//parse title and description
 		const title = interaction.options.getString('title') ?? ""; //defaults to empty string
 		const description = interaction.options.getString('description') ?? ""; //defaults to empty string
 		
 		if (title.length<1 && description.length<1) {
-			await interaction.reply({//send reply
+			await interaction.reply({//failure response
 				content: "I'm sorry, but you do need to give me something to change.",
 				ephemeral: true
 			});
-			return
+			return //end
+
 		} else {
-			if(title.length>0){ //change title
-				const titleEmbed = new EmbedBuilder()
-					.setTitle(title)
-				post.edit({ embeds: [titleEmbed] });
-			}
-			if(description.length>0){// change description
-				const descriptionEmbed = new EmbedBuilder()
-					.setDescription(description);
-				post.edit({ embeds: [descriptionEmbed] });
-			}
-			await interaction.reply({//send reply
+			if(title.length>0){ embed.setTitle(title)} //change title
+			if(description.length>0){embed.setDescription(description);} //change description
+			post.edit({ embeds: [embed] });//edit embed
+
+			await interaction.reply({//success response
 				content: `Alright, how does that look? ${link}`,
 				ephemeral: true
 			});
