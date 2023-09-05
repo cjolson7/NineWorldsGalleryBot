@@ -19,7 +19,7 @@ async function postImage(artMessage, postingChannels, spoiler){
             //spoiler images - split based on path separator and add SPOILER_ to the last section if it wasn't there already
             var imageUrl = attachment.url;
             //set up for spoilering by getting the image name
-            urlPieces = imageUrl.split('/');//url separator doesn't need os adjustment
+            var urlPieces = imageUrl.split('/');//url separator doesn't need os adjustment
             filename = urlPieces.pop();
             if (spoiler && !filename.startsWith("SPOILER_")){// if it needs to be spoilered and isn't already
                 filename = "SPOILER_" + filename; }//add spoiler flag to image name
