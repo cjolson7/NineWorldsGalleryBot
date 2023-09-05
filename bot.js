@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, Collection, Events, GatewayIntentBits, messageLink, ApplicationCommandPermissionsManager } = require('discord.js');
+const { Client, Collection, Events, GatewayIntentBits, } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const data = require('./data.js');
