@@ -44,7 +44,7 @@ module.exports = {
 		//poster of the message being edited should be the bot
 		if(post.author.id != process.env.BOTID){
 			await interaction.reply({//failure response
-				content: "I'm sorry, but it looks like that's not one of my pieces.",
+				content: "I'm sorry, but I can only edit things that I reposted.",
 				ephemeral: true
 			});
 			return //end
