@@ -7,7 +7,7 @@ module.exports = {
 		.setDescription('What do I do?'),
 	async execute(interaction) {
 		await interaction.reply({
-			content: 'Hi! My job is to asdf your art!\n\nIf you ping me in an image post or in a reply to an image post, I can add that image to my gallery.',
+			content: 'Hi! My job is to record your art!\n\nIf you ping me in an image post or in a reply to an image post, I can add that image to my gallery.',
 			ephemeral: true
 		});
 	}
