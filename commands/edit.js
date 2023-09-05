@@ -29,7 +29,6 @@ module.exports = {
 
 		const channel = await interaction.client.channels.cache.get(channelId); //get channel
 		const post = await channel.messages.fetch(messageId); //get post  //link error handling needed!
-		console.log(message.id)
 
 		//compare interaction.user.id to author id
 		console.log(interaction.user.id)
