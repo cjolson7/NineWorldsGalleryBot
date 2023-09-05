@@ -33,7 +33,7 @@ module.exports = {
 				content: "I'm sorry, but I can only edit art that is in my galleries.",
 				ephemeral: true
 			});
-			return //endgit 
+			return //end 
 		}
 
 		const channel = await interaction.client.channels.cache.get(channelId); //get channel
