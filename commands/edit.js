@@ -20,9 +20,10 @@ module.exports = {
 			.setMinLength(1)
 			.setMaxLength(4096)
 			.setRequired(false))
-		.addBooleanOption(option => option.setName('add_images')
-			.setDescription('Bot will ask you for more images to add to the post (optional)')
-			.setRequired(false))
+		// .addStringOption(option => option.setName('add_image')
+		// 	.setDescription('Bot will take an image link and add the image to the gallery post (optional)')	
+		// 	.setMinLength(1)
+		// 	.setRequired(false))
 		.addBooleanOption(option => option.setName('clear_description')
 			.setDescription('Remove description from gallery post (optional)')
 			.setRequired(false)),
@@ -81,9 +82,9 @@ module.exports = {
 		const title = interaction.options.getString('title') ?? ""; //defaults to empty string
 		const description = interaction.options.getString('description') ?? ""; //defaults to empty string
 		const clearDescription = interaction.options.getBoolean('clear_description') ?? false; //defaults to false
-		const addImages = interaction.options.getBoolean('add_images') ?? false; //defaults to false
+		const newImageLink = interaction.options.getString('add_image') ?? ""; //defaults to empty string
 		
-		if (title.length<1 && description.length<1 && !clearDescription && !addImages) {
+		if (title.length<1 && description.length<1 && !clearDescription && newImageLink.length<1) {
 			await interaction.reply({//failure response
 				content: "I'm sorry, but you do need to give me something to change.",
 				ephemeral: true
@@ -104,8 +105,21 @@ module.exports = {
 			if(description.length>0 && !clearDescription){newEmbed.setDescription(description);} //set description
 			else if (!clearDescription) {newEmbed.setDescription(embedData.description)}
 
-			//image request goes here
-			if(addImages){channel.send("image request still in progress!")}
+			// //image request goes here
+			// if(newImageLink.length<1){
+
+			// 	//validate image url
+			// 	if (!(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g).test(newImageLink)) {
+        	// 		await interaction.reply({//failure response
+			// 			content: "I'm sorry, but I don't recognize that URL.",
+			// 			ephemeral: true
+			// 		});
+			// 		return //end
+			// 	}
+				
+			// 	//get existing image content
+
+			// }
 
 			post.edit({ embeds: [newEmbed] });//edit embed
 
