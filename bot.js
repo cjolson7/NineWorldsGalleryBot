@@ -61,7 +61,7 @@ client.on("ready", () => {//when the bot first logs in
 
 client.on("messageCreate", async pingMessage => {//respond to messages where the bot is pinged and there is art
 
-  if(pingMessage.mentions.has(process.env.BOTID)){//if bot is mentioned
+  if(pingMessage.mentions.has(process.env.BOTID, {ignoreRepliedUser: true, ignoreEveryone: true})){//if bot is mentioned (ignore replies and @here/@everyone)
 
     var pingChannel = pingMessage.channel; //the channel it was pinged in
     var repliedTo = pingMessage.reference; //the referenced (replied to) message if any
@@ -91,7 +91,8 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
             return (reaction.emoji.name === '🇾' || reaction.emoji.name === '🔒' || reaction.emoji.name === '✍️' || reaction.emoji.name === '✅') &&
             	user.id === artMessage.author.id;
           };
-          const collector = botResponse.createReactionCollector({ filter: collectorFilter, time: data.day*2, dispose: true}); //bot watches the message for a day (unless stopped by ✅)
+
+          const collector = botResponse.createReactionCollector({ filter: collectorFilter, time: data.day*2, dispose: true}); //bot watches the message for 2 days (unless stopped by ✅)
           //send a message when you detect the ✅, record detecting the others
           collector.on('collect', async (reaction, user) => {
             if (!yesDetected && reaction.emoji.name === '🇾') yesDetected=true; //use detector vars to know when they're clicked
@@ -114,8 +115,40 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
             var replaceMessage;
             if(reason === 'time'){replaceMessage = data.timeout}//edit post on timeout
             else if(reason === 'user'){//when a user stops the collector, post the image and edit the message
-              var confirmationMessage = data.noMessage; //default response  is no 
               
+              var confirmationMessage = data.noMessage; //default response is no 
+              var spoilerTag; //needs to exist as blank even when not updated
+
+              if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
+                await botResponse.edit({content: data.spoilerMessage})//edit its message to ask for spoiler text
+                botResponse.react('🇳'); //add reaction
+                const timeout = data.day/2 //consistent timeout
+                var finished = false;
+
+                const noFilter = (reaction, user) => {return (reaction.emoji.name === '🇳' && user.id === artMessage.author.id)};//filter for 🇳 emoji by original poster
+                const replyFilter = (message) => {return (artMessage.author.id === message.author.id && message.reference && message.reference.messageId === botResponse.id)};//filter for a reply from the poster
+                const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: timeout, dispose: true, max: 1})//message collector watches for one reply
+                const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: timeout, dispose: true}); //bot watches for a message or reaction for half a day (unless stopped early)
+                
+                noCollector.on('collect', () => {
+                  console.log("stopping everything")
+                  noCollector.stop();//stop and move on if the reaction filter collects anything (since it's already filtered down to the one emoji)
+                  replyCollector.stop();
+                }) //stop reply collector, too
+
+                replyCollector.on('collect', async (replyMessage) => {//change this function, it doesn't like on collect
+                  spoilerTag = await replyMessage.content;
+                })
+                await replyCollector.on('end', ()=>{
+                  noCollector.stop() //make sure both collectors stop     
+                  finished = true;//when it stops waiting for replies it is done
+                })
+
+                await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collectors have gotten their answers and closed
+                console.log("spoiler collector is resolved!")
+
+              }
+
               //if yes, make the posts!
               if(yesDetected){
                 const galleryChannel = client.channels.cache.get(process.env.GALLERYCHANNELID); //get gallery channel
@@ -124,7 +157,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                   const victoriaChannel = client.channels.cache.get(process.env.VICTORIACHANNELID); 
                   postingChannels.push(victoriaChannel);
                 }
-                confirmationMessage = await postImage(artMessage, postingChannels, spoilerDetected); //post to channels and return links to posts!
+                confirmationMessage = await postImage(artMessage, postingChannels, spoilerDetected, spoilerTag); //post to channels and return links to posts!
               }
               replaceMessage = confirmationMessage//prepare to edit in the message
             }

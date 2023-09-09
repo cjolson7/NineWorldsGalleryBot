@@ -12,6 +12,8 @@ module.exports = {
         yesMessage +="!"; //end
         return yesMessage; 
     },
+    spoilerMessage: "I'll post your art in just a moment. Do you want its gallery post to have a brief explanation of why it's spoilered?\n\n"+
+    "You can reply to me with the explanation. If you use 🇳, I'll move on.",
     timeout: "I've timed out, so I won't take responses here. Call me again if you need me!",
     unknownEndReason: "I am no longer watching this message. Call me again if you need me!",
     day: 24*60*60*1000,//24 hours in milliseconds
@@ -26,5 +28,13 @@ module.exports = {
 		const messageId = fields.pop(); //id is the last field 
 		const channelId = fields.pop(); //channel is the next to last
         return [messageId, channelId];
-    }
+    },
+    waitFor: (condition)=>{//conditional waiting function, doesn't move on until it detects its condition
+        const poll = resolve => {
+          if(condition()) resolve();
+          else setTimeout(_ => poll(resolve), 200);//checks every 200 ms
+        }
+        return new Promise(poll)
+      }
+
 };

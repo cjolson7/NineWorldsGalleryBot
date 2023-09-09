@@ -2,7 +2,7 @@ const {EmbedBuilder } = require('discord.js');
 require('dotenv').config();
 const data = require('./data.js');
 
-async function postImage(artMessage, postingChannels, spoiler){
+async function postImage(artMessage, postingChannels, spoiler, spoilerTag){
 
     var messageAttachments = artMessage.attachments.size > 0 ? artMessage.attachments : null; //get the attachments
     if (messageAttachments) {//no need to send something if there is somehow not an image
@@ -19,19 +19,17 @@ async function postImage(artMessage, postingChannels, spoiler){
         artMessage.id); //create link to original post
 
         var imageFiles = [];
-        messageAttachments.forEach(async attachment => {//prep each image into a file array with spoilers as necessary
+        messageAttachments.forEach(async attachment => { //prep each image into a file array with spoilers as necessary
 
-            //spoiler images - split based on path separator and add SPOILER_ to the last section if it wasn't there already
-            var imageUrl = attachment.url;
-            //set up for spoilering by getting the image name
-            var filename = (imageUrl.split('/')).pop();//url separator doesn't need os adjustment and only last chunk is needed
+            var imageUrl = attachment.url; //get url of actual image
+            var filename = (imageUrl.split('/')).pop(); //get the last chunk of the filename as the actual image name
             
-            if (spoiler && !filename.startsWith("SPOILER_")){// if it needs to be spoilered and isn't already
-                filename = "SPOILER_" + filename; }//add spoiler flag to image name
+            if (spoiler &&  !filename.startsWith("SPOILER_")) filename = "SPOILER_" + filename; //if it needs to be spoilered and isn't already, add the spoilerflag to the filename
             
             imageFiles.push({
                 attachment:imageUrl,
                 name: filename})//add image to array
+
         });
         
         //create attachable image and embedded data
@@ -43,7 +41,10 @@ async function postImage(artMessage, postingChannels, spoiler){
                 { name: "Links", value: `[Original](${artLink})`})
             .setTimestamp(artMessage.createdTimestamp);//timestamp of original post
 
-        if(messageContent.length > 0) embed.setDescription(messageContent)//describe only if there's content
+        //if it's spoilered and spoiler tag exists, update description with it (no default description)
+        var messageDescription = (messageContent.length>0)? messageContent : ""//start with message content if sany as description
+        if(spoiler && spoilerTag) messageDescription += (messageDescription.length>0)? `\n(${spoilerTag})` : `(${spoilerTag})`//add spoiler tag to description if present
+        if(messageDescription.length > 0) embed.setDescription(messageDescription)//describe in embed if there's something here to use
 
         var artPost = { //combine all the art together for multiple similar sends
             embeds: [embed],   //embed
