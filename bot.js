@@ -81,7 +81,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
       var victoriaDetected=false;
       var doneDetected=false;
 
-      artMessage.reply(data.artResponseMessage).then((botResponse) => {
+      artMessage.reply(data.artResponseMessage(artMessage.author.id)).then((botResponse) => {//send the message, including user reference
           botResponse.react('🇾');
           botResponse.react('🔒');
           botResponse.react('✍️');
@@ -91,7 +91,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
             return (reaction.emoji.name === '🇾' || reaction.emoji.name === '🔒' || reaction.emoji.name === '✍️' || reaction.emoji.name === '✅') &&
             	user.id === artMessage.author.id;
           };
-          const collector = botResponse.createReactionCollector({ filter: collectorFilter, time: data.day, dispose: true}); //bot watches the message for a day (unless stopped by ✅)
+          const collector = botResponse.createReactionCollector({ filter: collectorFilter, time: data.day*2, dispose: true}); //bot watches the message for a day (unless stopped by ✅)
           //send a message when you detect the ✅, record detecting the others
           collector.on('collect', async (reaction, user) => {
             if (!yesDetected && reaction.emoji.name === '🇾') yesDetected=true; //use detector vars to know when they're clicked
@@ -101,22 +101,6 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
             if (!doneDetected && reaction.emoji.name === '✅') {
               doneDetected=true; //this one only reacts the first time and doesn't care if it's removed
               collector.stop();//turn off the collector after it receives this emoji
-              
-              var actualMessage = data.noMessage; //default is no
-              if(yesDetected) actualMessage = data.yesMessage(spoilerDetected, victoriaDetected); //formulate yes based on what it's doing
-              pingChannel.send(actualMessage); //send confirmation message
-              
-              //if yes, post the art to all relevant channels!
-              if(yesDetected){
-                const galleryChannel = client.channels.cache.get(process.env.GALLERYCHANNELID); //get gallery channel
-                var postingChannels = [galleryChannel];//gallery is the default
-                if(victoriaDetected) {//it it's being used, get other channel from id and add it to the list
-                  const victoriaChannel = client.channels.cache.get(process.env.VICTORIACHANNELID); 
-                  postingChannels.push(victoriaChannel);
-                }
-                await postImage(artMessage, postingChannels, spoilerDetected); //post to channels!
-              }
-
             }
           });
 
@@ -126,11 +110,30 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
             if (victoriaDetected && reaction.emoji.name === '✍️') victoriaDetected=false;
           });
           
-          collector.on('end', collected => {//log count at the end and reset counters
-            console.log(`Collected ${collected.size} items`);
+          collector.on('end', async (collected, reason) => {//edit instruction message on collector stop
+            var replaceMessage;
+            if(reason === 'time'){replaceMessage = data.timeout}//edit post on timeout
+            else if(reason === 'user'){//when a user stops the collector, post the image and edit the message
+              var confirmationMessage = data.noMessage; //default response  is no 
+              
+              //if yes, make the posts!
+              if(yesDetected){
+                const galleryChannel = client.channels.cache.get(process.env.GALLERYCHANNELID); //get gallery channel
+                var postingChannels = [galleryChannel];//gallery is the default
+                if(victoriaDetected) {//it it's being used, get other channel from id and add it to the list
+                  const victoriaChannel = client.channels.cache.get(process.env.VICTORIACHANNELID); 
+                  postingChannels.push(victoriaChannel);
+                }
+                confirmationMessage = await postImage(artMessage, postingChannels, spoilerDetected); //post to channels and return links to posts!
+              }
+              replaceMessage = confirmationMessage//prepare to edit in the message
+            }
+            else{replaceMessage = data.unknownEndReason}//any other reason gets a default response
+
+            await botResponse.edit({content: replaceMessage, embeds: []})//edit its message
           });
         });
       }
-    else pingChannel.send(data.noImageMessage); //catch case for no images found in ping message or reply
+    else pingMessage.reply(data.noImageMessage); //report if no images found in either ping message or reply
   }
 });

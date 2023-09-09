@@ -51,6 +51,7 @@ async function postImage(artMessage, postingChannels, spoiler){
         //gallery channel is the default others are added to, it should always be first
         var galleryLink;
         var galleryPost;
+        var victoriaLink;
         await postingChannels[0].send(artPost).then(sent => { //make link to posted message
             galleryLink = data.generateLink(process.env.GUILDID, process.env.GALLERYCHANNELID, sent.id)
             galleryPost = sent; //save first post
@@ -61,13 +62,18 @@ async function postImage(artMessage, postingChannels, spoiler){
             artPost.embeds[0].data.fields[1].value = originalLink +  ` / [Gallery](${galleryLink})`;
             
             await postingChannels[1].send(artPost).then(sent => { //make link
-                const victoriaLink = data.generateLink(process.env.GUILDID, process.env.VICTORIACHANNELID, sent.id)
+                victoriaLink = data.generateLink(process.env.GUILDID, process.env.VICTORIACHANNELID, sent.id)
                 //now edit the original post with this data
                 embed.data.fields[1].value = originalLink +  ` / [Victoria's Gallery](${victoriaLink})`;
                 galleryPost.edit({ embeds: [embed] });//edit first post
             });
         }
     }
+
+    //return from posting with the correct confirmation message
+    postLinks = [galleryLink] //formulate and return post links, incl. victoria if applicable
+    if(victoriaLink) postLinks.push(victoriaLink)
+    return data.yesMessage(spoiler, postLinks);//formulate the message based on link count / spoilers
 }
       
 module.exports={postImage};

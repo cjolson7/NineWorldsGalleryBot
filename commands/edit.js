@@ -6,7 +6,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('edit')
-		.setDescription('Fix the title and/or description of one of your posted pieces')
+		.setDescription('Fix the title and/or description of one of your posted pieces.')
 		.addStringOption(option => option.setName('link')
 			.setDescription('Discord link to the posted art')
 			.setRequired(true))
@@ -19,6 +19,12 @@ module.exports = {
 			.setDescription('New description (optional)')
 			.setMinLength(1)
 			.setMaxLength(4096)
+			.setRequired(false))
+		.addBooleanOption(option => option.setName('add_images')
+			.setDescription('Bot will ask you for more images to add to the post (optional)')
+			.setRequired(false))
+		.addBooleanOption(option => option.setName('clear_description')
+			.setDescription('Remove description from gallery post (optional)')
 			.setRequired(false)),
 	async execute(interaction) {
 
@@ -74,8 +80,10 @@ module.exports = {
 		//parse title and description
 		const title = interaction.options.getString('title') ?? ""; //defaults to empty string
 		const description = interaction.options.getString('description') ?? ""; //defaults to empty string
+		const clearDescription = interaction.options.getBoolean('clear_description') ?? false; //defaults to false
+		const addImages = interaction.options.getBoolean('add_images') ?? false; //defaults to false
 		
-		if (title.length<1 && description.length<1) {
+		if (title.length<1 && description.length<1 && !clearDescription && !addImages) {
 			await interaction.reply({//failure response
 				content: "I'm sorry, but you do need to give me something to change.",
 				ephemeral: true
@@ -91,8 +99,13 @@ module.exports = {
 
 			if(title.length>0){ newEmbed.setTitle(title)} //set title
 			else if (embedData.title) {newEmbed.setTitle(embedData.title)}//embed might not have a title, set if it does
-			if(description.length>0){newEmbed.setDescription(description);} //set description
-			else {newEmbed.setDescription(embedData.description)}
+
+			//do nothing if clear description true
+			if(description.length>0 && !clearDescription){newEmbed.setDescription(description);} //set description
+			else if (!clearDescription) {newEmbed.setDescription(embedData.description)}
+
+			//image request goes here
+			if(addImages){channel.send("image request still in progress!")}
 
 			post.edit({ embeds: [newEmbed] });//edit embed
 
