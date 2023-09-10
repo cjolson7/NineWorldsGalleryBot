@@ -118,13 +118,35 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
               
               var confirmationMessage = data.noMessage; //default response is no 
               var spoilerTag; //needs to exist as blank even when not updated
+              const timeout = data.day/2 //consistent timeout
+              var finished = false;//reuse stopper variable since spoiler cases are contradictory
+              var unspoiler = false;//unspoiler defaults to false
+            
+              if(!spoilerDetected){//if they did *not* spoiler, check if any of the images are spoilered
+                const filenames = artMessage.attachments.map((a)=>{a.split('/').pop()}) //array of filenames
+                const spoilerFiles = filenames.filter(file => file.includes("SPOILER_")); //subset of array that contains the number that are already spoilered
+                if(spoilerFiles.length>0){//if they did not choose spoiler but any of the images have a spoiler
+                  const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === data.yesEmoji || reaction.emoji.name === data.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster
+                  const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: timeout, dispose: true}); //bot watches for a reaction
+                  
+                  //edits the prompt and reacts to its own message
+                  await botResponse.edit({content: data.unspoilerCheck})
+                  botResponse.react(data.noEmoji); 
+                  botResponse.react(data.yesEmoji); 
 
-              if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
+                  unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
+                    if(reaction.emoji.name === data.yesEmoji) unspoiler = true;
+                    unspoilerCollector.stop();
+                    finished = true; //callback flag for bot to move on
+                  }) 
+
+                  await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and closed
+                  console.log("unspoiler collector is resolved!")}
+
+                }
+              else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
                 await botResponse.edit({content: data.spoilerMessage})//edit its message to ask for spoiler text
                 botResponse.react('🇳'); //add reaction
-                const timeout = data.day/2 //consistent timeout
-                var finished = false;
-
                 const noFilter = (reaction, user) => {return (reaction.emoji.name === '🇳' && user.id === artMessage.author.id)};//filter for 🇳 emoji by original poster
                 const replyFilter = (message) => {return (artMessage.author.id === message.author.id && message.reference && message.reference.messageId === botResponse.id)};//filter for a reply from the poster
                 const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: timeout, dispose: true, max: 1})//message collector watches for one reply
@@ -156,7 +178,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                   const victoriaChannel = client.channels.cache.get(process.env.VICTORIACHANNELID); 
                   postingChannels.push(victoriaChannel);
                 }
-                confirmationMessage = await postImage(artMessage, postingChannels, spoilerDetected, spoilerTag); //post to channels and return links to posts!
+                confirmationMessage = await postImage(artMessage, postingChannels, spoilerDetected, spoilerTag, unspoiler); //post to channels and return links to posts!
               }
               replaceMessage = confirmationMessage//prepare to edit in the message
             }

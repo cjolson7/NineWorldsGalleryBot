@@ -2,7 +2,7 @@ const {EmbedBuilder } = require('discord.js');
 require('dotenv').config();
 const data = require('./data.js');
 
-async function postImage(artMessage, postingChannels, spoiler, spoilerTag){
+async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspoiler){
 
     var messageAttachments = artMessage.attachments.size > 0 ? artMessage.attachments : null; //get the attachments
     if (messageAttachments) {//no need to send something if there is somehow not an image
@@ -25,6 +25,7 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag){
             var filename = (imageUrl.split('/')).pop(); //get the last chunk of the filename as the actual image name
             
             if (spoiler &&  !filename.startsWith("SPOILER_")) filename = "SPOILER_" + filename; //if it needs to be spoilered and isn't already, add the spoilerflag to the filename
+            else if (!spoiler && unspoiler && filename.startsWith("SPOILER_")) filename = filename.replace("SPOILER_", "");//if it needs to be unspoilered, remove "SPOILER_"
             
             imageFiles.push({
                 attachment:imageUrl,
@@ -41,10 +42,12 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag){
                 { name: "Links", value: `[Original](${artLink})`})
             .setTimestamp(artMessage.createdTimestamp);//timestamp of original post
 
-        //if it's spoilered and spoiler tag exists, update description with it (no default description)
-        var messageDescription = (messageContent.length>0)? messageContent : ""//start with message content if sany as description
-        if(spoiler && spoilerTag) messageDescription += (messageDescription.length>0)? `\n(${spoilerTag})` : `(${spoilerTag})`//add spoiler tag to description if present
+        //parse description
+        var messageDescription = (messageContent.length>0)? messageContent : ""//start with message content if any as description
         if(messageDescription.length > 0) embed.setDescription(messageDescription)//describe in embed if there's something here to use
+
+        //add spoiler tag as field if tag present and spoiler true
+        if(spoiler && spoilerTag) embed.addFields({name: data.spoilerField, value: spoilerTag})
 
         var artPost = { //combine all the art together for multiple similar sends
             embeds: [embed],   //embed
@@ -61,13 +64,13 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag){
         });
 
         if (postingChannels.length>1){//if more than one channel keep going
-            var originalLink = embed.data.fields[1].value
-            artPost.embeds[0].data.fields[1].value = originalLink +  ` / [Gallery](${galleryLink})`;
+            var originalLink = embed.data.fields.find(f => f.name === "Links").value
+            artPost.embeds[0].data.fields.find(f => f.name === "Links").value = originalLink +  ` / [Gallery](${galleryLink})`;
             
             await postingChannels[1].send(artPost).then(sent => { //make link
                 victoriaLink = data.generateLink(process.env.GUILDID, process.env.VICTORIACHANNELID, sent.id)
                 //now edit the original post with this data
-                embed.data.fields[1].value = originalLink +  ` / [Victoria's Gallery](${victoriaLink})`;
+                embed.data.fields.find(f => f.name === "Links").value = originalLink +  ` / [Victoria's Gallery](${victoriaLink})`;
                 galleryPost.edit({ embeds: [embed] });//edit first post
             });
         }

@@ -20,12 +20,19 @@ module.exports = {
 			.setMinLength(1)
 			.setMaxLength(4096)
 			.setRequired(false))
-		// .addStringOption(option => option.setName('add_image')
-		// 	.setDescription('Bot will take an image link and add the image to the gallery post (optional)')	
-		// 	.setMinLength(1)
-		// 	.setRequired(false))
+		.addStringOption(option => option.setName('spoiler_tag')
+			.setDescription('New spoiler reason / warning (optional)')	
+			.setMinLength(1)
+			.setMaxLength(256)
+			.setRequired(false))
 		.addBooleanOption(option => option.setName('clear_description')
 			.setDescription('Remove description from gallery post (optional)')
+			.setRequired(false)) 
+		.addBooleanOption(option => option.setName('clear_spoiler')
+			.setDescription('Remove spoiler tag from gallery post (optional)')
+			.setRequired(false))
+		.addBooleanOption(option => option.setName('clear_title')
+			.setDescription('Remove title from gallery post (optional)')
 			.setRequired(false)),
 	async execute(interaction) {
 
@@ -81,10 +88,12 @@ module.exports = {
 		//parse title and description
 		const title = interaction.options.getString('title') ?? ""; //defaults to empty string
 		const description = interaction.options.getString('description') ?? ""; //defaults to empty string
+		const spoilerTag = interaction.options.getString('spoiler_tag') ?? ""; //defaults to empty string
 		const clearDescription = interaction.options.getBoolean('clear_description') ?? false; //defaults to false
-		const newImageLink = interaction.options.getString('add_image') ?? ""; //defaults to empty string
+		const clearTitle = interaction.options.getBoolean('clear_description') ?? false; //defaults to false
+		const clearSpoiler = interaction.options.getBoolean('clear_description') ?? false; //defaults to false
 		
-		if (title.length<1 && description.length<1 && !clearDescription && newImageLink.length<1) {
+		if (title.length<1 && description.length<1 && spoilerTag<1 && !clearTitle && !clearDescription && !clearSpoiler) {
 			await interaction.reply({//failure response
 				content: "I'm sorry, but you do need to give me something to change.",
 				ephemeral: true
@@ -96,14 +105,34 @@ module.exports = {
 			const newEmbed = new EmbedBuilder()//preserve old data
 				.setColor(embedData.color)
 				.setTimestamp(timestamp)
-				.setFields(embedData.fields);
 
-			if(title.length>0){ newEmbed.setTitle(title)} //set title
-			else if (embedData.title) {newEmbed.setTitle(embedData.title)}//embed might not have a title, set if it does
+			if(!clearTitle){//if clear title, ignore other title info
+				if(title.length>0) newEmbed.setTitle(title) //if title is present, use it
+				else if (embedData.title) {newEmbed.setTitle(embedData.title)} //otherwise keep existing title if present
+			}
+			
+			if(!clearDescription){//do nothing if clear description true
+				if(description.length>0){newEmbed.setDescription(description);} //set description if present
+				else if (embedData.description) newEmbed.setDescription(embedData.description) //otherwise keep existing description if present
+			}
 
-			//do nothing if clear description true
-			if(description.length>0 && !clearDescription){newEmbed.setDescription(description);} //set description
-			else if (!clearDescription) {newEmbed.setDescription(embedData.description)}
+			if(!clearDescription){//do nothing if clear description true
+				if(description.length>0){newEmbed.setDescription(description);} //set description if present
+				else if (embedData.description) newEmbed.setDescription(embedData.description) //otherwise keep existing description if present
+			}
+
+			var newFields = embedData.fields;
+			console.log("spoiler testing")
+			if(clearSpoiler) newFields.delete(data.spoilerField); //remove spoiler from newFields
+			else{
+				if(spoilerTag){//if spoiler not cleared and spoiler tag provided
+					if(newFields.find(f => f.name === data.spoilerField).value){//if that field already has a value
+						newFields.find(f => f.name === data.spoilerField).value = spoilerTag; //update the value
+					}else newFields.add({name: data.spoilerField, value: spoilerTag}) //add the field
+				}
+			}//todo: make sure to check these cases thoroughly against the data structure behavior!!!
+			newEmbed.setFields(newFields);//set fields based on existing
+
 
 			// //image request goes here
 			// if(newImageLink.length<1){
@@ -145,6 +174,6 @@ module.exports = {
 				content: `Alright, how does that look? ${link}`,
 				ephemeral: true
 			});
-		}
+		};
 	},
 };
