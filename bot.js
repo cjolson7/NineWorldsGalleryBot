@@ -131,7 +131,6 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                 const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: timeout, dispose: true}); //bot watches for a message or reaction for half a day (unless stopped early)
                 
                 noCollector.on('collect', () => {
-                  console.log("stopping everything")
                   noCollector.stop();//stop and move on if the reaction filter collects anything (since it's already filtered down to the one emoji)
                   replyCollector.stop();
                 }) //stop reply collector, too

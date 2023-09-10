@@ -128,9 +128,7 @@ module.exports = {
 			if(linkField.includes("Gallery")){//Original or Original / (Victoria's) Gallery
 				//get the corresponding post from the links
 				var crossLink = linkField.split("(").pop();//get link
-				console.log(crossLink)
 				crossLink = crossLink.replace(")","")//trim end
-				console.log(crossLink)
 				const [crossMessageId, crossChannelId] = data.parseLink(crossLink);
 
 				const crossChannel = await interaction.client.channels.cache.get(crossChannelId); //get channel
