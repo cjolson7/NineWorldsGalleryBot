@@ -131,18 +131,16 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                   
                   //edits the prompt and reacts to its own message
                   await botResponse.edit({content: data.unspoilerCheck})
-                  botResponse.react(data.noEmoji); 
                   botResponse.react(data.yesEmoji); 
+                  botResponse.react(data.noEmoji); 
 
                   unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
                     if(reaction.emoji.name === data.yesEmoji) unspoiler = true;
                     unspoilerCollector.stop();
                     finished = true; //callback flag for bot to move on
                   }) 
-
                   await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and closed
-                  console.log("unspoiler collector is resolved!")}
-
+                  }
                 }
               else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
                 await botResponse.edit({content: data.spoilerMessage})//edit its message to ask for spoiler text
@@ -166,8 +164,6 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                 })
 
                 await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collectors have gotten their answers and closed
-                console.log("spoiler collector is resolved!")
-
               }
 
               //if yes, make the posts!

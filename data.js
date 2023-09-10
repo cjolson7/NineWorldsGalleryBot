@@ -18,7 +18,7 @@ module.exports = {
     noEmoji:"👎",//<:no:976053192385232896>",
     spoilerMessage: "I'll post your art in just a moment. Do you want its gallery post to have a brief explanation of why it's spoilered?\n\n"+
         "You can reply to me with the explanation. If you use 🇳, I'll move on.",
-    spoilerField:"Spoiler Tag",
+    spoilerField:"Spoiler Tag",//don't change this one, field names should be stable!
     timeout: "I've timed out, so I won't take responses here. Call me again if you need me!",
     unknownEndReason: "I am no longer watching this message. Call me again if you need me!",
     day: 24*60*60*1000,//24 hours in milliseconds

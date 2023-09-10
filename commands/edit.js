@@ -8,20 +8,20 @@ module.exports = {
 		.setName('edit')
 		.setDescription('Fix the title and/or description of one of your posted pieces.')
 		.addStringOption(option => option.setName('link')
-			.setDescription('Discord link to the posted art')
+			.setDescription('Discord link to the posted art (required)')
 			.setRequired(true))
 		.addStringOption(option => option.setName('title')
-			.setDescription('New title (optional)')
+			.setDescription('Updated title (optional)')
 			.setMinLength(1)
 			.setMaxLength(256)
 			.setRequired(false))
 		.addStringOption(option => option.setName('description')
-			.setDescription('New description (optional)')
+			.setDescription('Updated description (optional)')
 			.setMinLength(1)
 			.setMaxLength(4096)
 			.setRequired(false))
 		.addStringOption(option => option.setName('spoiler_tag')
-			.setDescription('New spoiler reason / warning (optional)')	
+			.setDescription('Updated spoiler tag (optional)')	
 			.setMinLength(1)
 			.setMaxLength(256)
 			.setRequired(false))
@@ -125,7 +125,7 @@ module.exports = {
 					}else{ //if field is not there already add it (but make links be last)
 					newFields = newFields.filter(field => (field.name != data.spoilerField && field.name!="Links"));//filter links and spoiler out of fields
 					newFields.push({name: data.spoilerField, value: spoilerTag}) //add spoilers
-					newFields.push(embedData.fields.find(f => f.name === "Links")) //add links 
+					newFields.push(embedData.fields.find(f => f.name === "Links")) //add links (last for aesthetics)
 					}
 				}
 			}
