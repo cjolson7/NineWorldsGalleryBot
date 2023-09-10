@@ -93,7 +93,7 @@ module.exports = {
 		const clearDescription = interaction.options.getBoolean('clear_description') ?? false; //defaults to false
 		const clearSpoiler = interaction.options.getBoolean('clear_spoiler') ?? false; //defaults to false
 		
-		if (title.length<1 && description.length<1 && spoilerTag<1 && !clearTitle && !clearDescription && !clearSpoiler) {
+		if (title.length<1 && description.length<1 && spoilerTag.length<1 && !clearTitle && !clearDescription && !clearSpoiler) {
 			await interaction.reply({//failure response
 				content: "I'm sorry, but you do need to give me something to change.",
 				ephemeral: true
