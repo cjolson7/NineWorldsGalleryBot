@@ -25,14 +25,14 @@ module.exports = {
 			.setMinLength(1)
 			.setMaxLength(256)
 			.setRequired(false))
+		.addBooleanOption(option => option.setName('clear_title')
+			.setDescription('Remove title from gallery post (optional)')
+			.setRequired(false))
 		.addBooleanOption(option => option.setName('clear_description')
 			.setDescription('Remove description from gallery post (optional)')
 			.setRequired(false)) 
 		.addBooleanOption(option => option.setName('clear_spoiler')
 			.setDescription('Remove spoiler tag from gallery post (optional)')
-			.setRequired(false))
-		.addBooleanOption(option => option.setName('clear_title')
-			.setDescription('Remove title from gallery post (optional)')
 			.setRequired(false)),
 	async execute(interaction) {
 
@@ -89,9 +89,9 @@ module.exports = {
 		const title = interaction.options.getString('title') ?? ""; //defaults to empty string
 		const description = interaction.options.getString('description') ?? ""; //defaults to empty string
 		const spoilerTag = interaction.options.getString('spoiler_tag') ?? ""; //defaults to empty string
+		const clearTitle = interaction.options.getBoolean('clear_title') ?? false; //defaults to false
 		const clearDescription = interaction.options.getBoolean('clear_description') ?? false; //defaults to false
-		const clearTitle = interaction.options.getBoolean('clear_description') ?? false; //defaults to false
-		const clearSpoiler = interaction.options.getBoolean('clear_description') ?? false; //defaults to false
+		const clearSpoiler = interaction.options.getBoolean('clear_spoiler') ?? false; //defaults to false
 		
 		if (title.length<1 && description.length<1 && spoilerTag<1 && !clearTitle && !clearDescription && !clearSpoiler) {
 			await interaction.reply({//failure response
@@ -116,21 +116,19 @@ module.exports = {
 				else if (embedData.description) newEmbed.setDescription(embedData.description) //otherwise keep existing description if present
 			}
 
-			if(!clearDescription){//do nothing if clear description true
-				if(description.length>0){newEmbed.setDescription(description);} //set description if present
-				else if (embedData.description) newEmbed.setDescription(embedData.description) //otherwise keep existing description if present
-			}
-
 			var newFields = embedData.fields;
-			console.log("spoiler testing")
-			if(clearSpoiler) newFields.delete(data.spoilerField); //remove spoiler from newFields
+			if(clearSpoiler) newFields = newFields.filter(field => field.name != data.spoilerField);//filter spoiler out of fields
 			else{
 				if(spoilerTag){//if spoiler not cleared and spoiler tag provided
-					if(newFields.find(f => f.name === data.spoilerField).value){//if that field already has a value
+					if(newFields.find(f => f.name === data.spoilerField)){//if that field already exists
 						newFields.find(f => f.name === data.spoilerField).value = spoilerTag; //update the value
-					}else newFields.add({name: data.spoilerField, value: spoilerTag}) //add the field
+					}else{ //if field is not there already add it (but make links be last)
+					newFields = newFields.filter(field => (field.name != data.spoilerField && field.name!="Links"));//filter links and spoiler out of fields
+					newFields.push({name: data.spoilerField, value: spoilerTag}) //add spoilers
+					newFields.push(embedData.fields.find(f => f.name === "Links")) //add links 
+					}
 				}
-			}//todo: make sure to check these cases thoroughly against the data structure behavior!!!
+			}
 			newEmbed.setFields(newFields);//set fields based on existing
 
 

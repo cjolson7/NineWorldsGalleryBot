@@ -123,7 +123,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
               var unspoiler = false;//unspoiler defaults to false
             
               if(!spoilerDetected){//if they did *not* spoiler, check if any of the images are spoilered
-                const filenames = artMessage.attachments.map((a)=>{a.split('/').pop()}) //array of filenames
+                const filenames = artMessage.attachments.map((a)=>{return a.url.split('/').pop()}) //array of filenames
                 const spoilerFiles = filenames.filter(file => file.includes("SPOILER_")); //subset of array that contains the number that are already spoilered
                 if(spoilerFiles.length>0){//if they did not choose spoiler but any of the images have a spoiler
                   const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === data.yesEmoji || reaction.emoji.name === data.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster

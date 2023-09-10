@@ -37,17 +37,17 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspo
         const embed = new EmbedBuilder() //embed posts tagged data, making the gallery entry nice and clean and updatable as needed
             .setColor("#d81b0e")//discord win red
             //.setDescription(messageContent.length > 0 ? messageContent : "Some amazing fanart!")//default description (currently none)
-            .addFields(
-                { name: "Artist", value: `<@${artistId}>` },//the author's discord id
-                { name: "Links", value: `[Original](${artLink})`})
+            .addFields({ name: "Artist", value: `<@${artistId}>`})//the author's discord id
             .setTimestamp(artMessage.createdTimestamp);//timestamp of original post
 
-        //parse description
+        //parse and add description
         var messageDescription = (messageContent.length>0)? messageContent : ""//start with message content if any as description
         if(messageDescription.length > 0) embed.setDescription(messageDescription)//describe in embed if there's something here to use
 
         //add spoiler tag as field if tag present and spoiler true
         if(spoiler && spoilerTag) embed.addFields({name: data.spoilerField, value: spoilerTag})
+
+        embed.addFields({ name: "Links", value: `[Original](${artLink})`});//this one looks good if it's last
 
         var artPost = { //combine all the art together for multiple similar sends
             embeds: [embed],   //embed
