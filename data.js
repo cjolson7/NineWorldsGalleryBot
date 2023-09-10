@@ -14,8 +14,8 @@ module.exports = {
     },
     unspoilerCheck: "You did not tell me to add spoilers, but at least one image here is already spoilered. Would you like me to post your art with all image spoilers removed?\n\n"+
         "Please tell me <:yes:976052978261831750> or <:no:976053192385232896>.",
-    yesEmoji:"👍",//:yes:976052978261831750>",
-    noEmoji:"👎",//<:no:976053192385232896>",
+    yesEmoji:":yes:976052978261831750>", //👍
+    noEmoji:"<:no:976053192385232896>", //👎
     spoilerMessage: "I'll post your art in just a moment. Do you want its gallery post to have a brief explanation of why it's spoilered?\n\n"+
         "You can reply to me with the explanation. If you use 🇳, I'll move on.",
     spoilerField:"Spoiler Tag",//don't change this one, field names should be stable!
