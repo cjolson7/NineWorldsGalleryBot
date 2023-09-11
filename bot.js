@@ -115,8 +115,8 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
           
           collector.on('end', async (collected, reason) => {//edit instruction message on collector stop
             var replaceMessage;
-            if(reason === 'time'){replaceMessage = data.timeout}//edit post on timeout
-            else if(reason === 'user'){//when a user stops the collector, post the image and edit the message
+            if(reason === 'time' && !yesDetected){replaceMessage = data.timeout}//edit post on timeout
+            else if(reason === 'user' || (reason === 'time' && yesDetected)){//when a user stops the collector, or it times out with yes, post the image and edit the message
               
               var confirmationMessage = data.noMessage; //default response is no 
               var spoilerTag; //needs to exist as blank even when not updated
