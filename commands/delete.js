@@ -13,9 +13,9 @@ module.exports = {
 			.setRequired(true)),
 	async execute(interaction) {
 
-		var link, channel, post; //generate data from link
+		var link, post; //generate data from link
 		try{
-			[link, channel, post] = await galleryLinkErrors(interaction)//try to go parse the link - link is in the interaction data
+			[link, post] = await galleryLinkErrors(interaction, "delete")//try to go parse the link - link is in the interaction data
 		}catch(error){return};//if it can't get the data out then there was an error handled in the initial interaction and this is done
 
 		//set up cancel buttons

@@ -31,7 +31,7 @@ const data = {
     unknownEndReason: "I am no longer watching this message. Call me again if you need me!",
     day: 24*helpers.hour,//24 hours
     ephemeralTimeout: helpers.hour/2, //half an hour
-    linkRegex: /^https:\/\/discord.com\/channels\/\d*\/\d*\/\d*/,
+    linkRegex: /^https:\/\/discord.com\/channels\/[0-9]{17,19}\/[0-9]{17,19}\/[0-9]{17,19}\/?$/,
     generateLink: (guild, channel, message)=>{
         return ["https://discord.com/channels",
             guild,

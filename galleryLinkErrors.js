@@ -15,14 +15,12 @@ async function galleryLinkErrors(interaction, action){
     return //end 
     }
 
-    //parse link to get channel - blame the link for any errors
-    var channel; //get channel, handle errors
-    var post
-    try{ 
-        [messageId, channelId] = data.parseLink(link);
-        channel = await interaction.client.channels.cache.get(channelId); //get channel
+    //parse link to get channel and catch errors
+    var [messageId, channelId] = data.parseLink(link);
+    var channel;
+    try{ post = channel = await interaction.client.channels.fetch(channelId);
     }catch{await interaction.reply({//failure response
-        content: "I'm sorry, but I cannot read that link.",
+        content: "I'm sorry, but something seems to be wrong with that link.",
         ephemeral: true
         });
         return //end
@@ -74,7 +72,7 @@ async function galleryLinkErrors(interaction, action){
         return //end
     }
 
-    return [link, channel, post]//return parsed data
+    return [link, post]//return parsed data
 }
 
 module.exports={galleryLinkErrors};
