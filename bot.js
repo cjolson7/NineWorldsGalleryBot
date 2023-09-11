@@ -103,7 +103,6 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
             if (!doneDetected && reaction.emoji.name === '✅') {
               doneDetected=true; //this one only reacts the first time and doesn't care if it's removed
               collector.stop();//turn off the collector after it receives this emoji
-              collectors = data.collectorsDown(collectors);//decrement active collectors and report
             }
           });
 
@@ -114,6 +113,8 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
           });
           
           collector.on('end', async (collected, reason) => {//edit instruction message on collector stop
+            collectors = data.collectorsDown(collectors);//decrement active collectors on end and report
+
             var replaceMessage;
             if(reason === 'time' && !yesDetected){replaceMessage = data.timeout}//edit post on timeout
             else if(reason === 'user' || (reason === 'time' && yesDetected)){//when a user stops the collector, or it times out with yes, post the image and edit the message
@@ -140,9 +141,11 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                   unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
                     if(reaction.emoji.name === helpers.yesEmoji) unspoiler = true;
                     unspoilerCollector.stop();
-                    collectors = data.collectorsDown(collectors);//decrement active collectors and report
                     finished = true; //callback flag for bot to move on
-                  }) 
+                  });
+                  
+                  unspoilerCollector.on('end', ()=>{collectors = data.collectorsDown(collectors);});//decrement active collectors and report on end                 
+                  
                   await data.waitFor(_ => finished === true);//waits for finished to be true, which happectorCountns when collector has gotten an answer and closed
                   }
                 }

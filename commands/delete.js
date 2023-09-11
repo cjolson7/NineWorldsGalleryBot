@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const {data} = require('../data.js');
 const galleryLinkErrors = require('../galleryLinkErrors.js').galleryLinkErrors;
 
@@ -13,14 +13,16 @@ module.exports = {
 			.setRequired(true)),
 	async execute(interaction) {
 
-		[link, channel, post] = galleryLinkErrors(interaction);//check the link/channel and send default gallery link access errors
+		var link, channel, post; //generate data from link
+		try{
+			[link, channel, post] = await galleryLinkErrors(interaction)//try to go parse the link - link is in the interaction data
+		}catch(error){return};//if it can't get the data out then there was an error handled in the initial interaction and this is done
 
 		//set up cancel buttons
 		const confirm = new ButtonBuilder()
 			.setCustomId('delete')
 			.setLabel('Delete')
 			.setStyle(ButtonStyle.Primary)
-			.setDisabled(true);
 
 		const cancel = new ButtonBuilder()
 			.setCustomId('cancel')
@@ -34,25 +36,24 @@ module.exports = {
 			content: `Are you sure that you want to delete [this post?](${link})`,
 			components: [buttonRow],
 			ephemeral: true
-		});
-
-		// Response collector for buttons
-		const buttonCollector = ephemeralComponentFollowUp.createMessageComponentCollector({ componentType: ComponentType.Button, time: data.day/4 });//6 hr timeout
-		buttonCollector.on('collect', async buttonInteration => {
-
-			var buttonInteractionText;
-			if (buttonInteration.customId === 'delete') {
-				buttonInteractionText = "Okay, I'll delete it right away!";
+		}).then((sent)=>{
+			const buttonCollector = sent.createMessageComponentCollector({ time: data.ephemeralTimeout });//30 min timeout
+			buttonCollector.on('collect', async buttonInteration => {
 	
-				post.delete();//delete the post
-			}
-			else if (buttonInteration.customId == 'cancel') {
-				buttonInteractionText = "Okay, I won't delete it!";
-			}
-
-			await buttonInteration.update({ content: buttonInteractionText, components: [] })//remove buttons and update with comfirm text
-		});
-
-
+				var buttonInteractionText;
+				if (buttonInteration.customId === 'delete') {
+					buttonInteractionText = "Okay, I'll delete it right away!";
+		
+					post.delete();//delete the post
+				}
+				else if (buttonInteration.customId == 'cancel') {
+					buttonInteractionText = "Okay, I won't delete it!";
+				}
+	
+				await buttonInteration.update({ content: buttonInteractionText, components: [] })//remove buttons and update with comfirm text
+			});
+	
+	
+		})
 	}
 };

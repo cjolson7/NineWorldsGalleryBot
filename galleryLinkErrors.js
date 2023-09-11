@@ -1,5 +1,5 @@
 require('dotenv').config();
-const data = require('./data.js');
+const {data} = require('./data.js');
 
 async function galleryLinkErrors(interaction, action){
 
@@ -7,7 +7,7 @@ async function galleryLinkErrors(interaction, action){
     const link = interaction.options.getString('link');
     
     //error for bad link
-    if(!(link.startsWith("https://discord.com/channels/"))){//not a discord link
+    if(!(data.linkRegex.test(link))){//not a discord link
     await interaction.reply({//failure response
         content: "I'm sorry, but I don't recognize that link.",
         ephemeral: true
@@ -15,9 +15,18 @@ async function galleryLinkErrors(interaction, action){
     return //end 
     }
 
-    //parse link and get channel
-    [messageId, channelId] = data.parseLink(link);
-    const channel = await interaction.client.channels.cache.get(channelId); //get channel
+    //parse link to get channel - blame the link for any errors
+    var channel; //get channel, handle errors
+    var post
+    try{ 
+        [messageId, channelId] = data.parseLink(link);
+        channel = await interaction.client.channels.cache.get(channelId); //get channel
+    }catch{await interaction.reply({//failure response
+        content: "I'm sorry, but I cannot read that link.",
+        ephemeral: true
+        });
+        return //end
+    }
 
     //link channel should be one it has access to
     if(!channel.viewable){
@@ -28,8 +37,14 @@ async function galleryLinkErrors(interaction, action){
         return //end
     }
 
-    //get post 
-    const post = await channel.messages.fetch(messageId);
+    var post; //get post, handle errors
+    try{ post = await channel.messages.fetch(messageId);
+    }catch{await interaction.reply({//failure response
+        content: "I'm sorry, but I cannot read that link.",
+        ephemeral: true
+        });
+        return //end
+    }
     
     //get gallery channels
     const galleryChannels = [process.env.VICTORIACHANNELID,  process.env.GALLERYCHANNELID]
@@ -43,6 +58,14 @@ async function galleryLinkErrors(interaction, action){
         return //end
     }
 
+    if (post.embeds.length<1 || post.attachments.length<1) {//post should have at least one embed and at least one attached file
+        await interaction.reply({//failure response
+            content: `I'm sorry, but that post does not seem to contain art.`,
+            ephemeral: true
+        });
+        return //end
+    }
+
     if (!post.embeds[0].data.fields.find(f => f.name === "Artist").value.includes(interaction.user.id)) {//compare interaction.user.id to author id - only the author in the embed can make the edit
         await interaction.reply({//failure response
             content: `I'm sorry, but you can only ${action} art that you originally posted.`,
@@ -51,7 +74,7 @@ async function galleryLinkErrors(interaction, action){
         return //end
     }
 
-    return [link, channel, post]//return parsed data if it did not error
+    return [link, channel, post]//return parsed data
 }
 
 module.exports={galleryLinkErrors};

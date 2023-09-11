@@ -4,7 +4,8 @@ const helpers = {
     collectorTracker: (verb, collectors)=>{
         console.log(`Collector ${verb}. I am currently monitoring ${collectors} collectors.`);
         return collectors;
-    }
+    },
+    hour: 1000*60*60,//hour in milliseconds
 }
   
 const data = {
@@ -28,7 +29,9 @@ const data = {
     spoilerField:"Spoiler Tag",//don't change this one, field names should be stable!
     timeout: "I've timed out, so I won't take responses here. Call me again if you need me!",
     unknownEndReason: "I am no longer watching this message. Call me again if you need me!",
-    day: 24*60*60*1000,//24 hours in milliseconds
+    day: 24*helpers.hour,//24 hours
+    ephemeralTimeout: helpers.hour/2, //half an hour
+    linkRegex: /^https:\/\/discord.com\/channels\/\d*\/\d*\/\d*/,
     generateLink: (guild, channel, message)=>{
         return ["https://discord.com/channels",
             guild,
