@@ -44,12 +44,14 @@ module.exports = {
 				if (buttonInteration.customId === 'delete') {
 					buttonInteractionText = "Okay, I've deleted it!";
 					//find out if the post has a pair in the other gallery
+					const crossPost = await data.getCrosspost(post.embeds[0], interaction)
 
-					await post.delete();//delete the post
-
-					//delete the other one, too
-
-					buttonInteractionText = "Okay, I've deleted this post in both galleries!"
+					//delete the crosspost if it exists
+					if(crossPost){
+						await crossPost.delete();
+						buttonInteractionText = "Okay, I've deleted this post in both galleries!"
+					}
+					await post.delete();//delete the original post
 				}
 				else if (buttonInteration.customId == 'cancel') {
 					buttonInteractionText = "Okay, I won't delete it!";

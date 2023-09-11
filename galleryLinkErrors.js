@@ -18,7 +18,7 @@ async function galleryLinkErrors(interaction, action){
     //parse link to get channel and catch errors
     var [messageId, channelId] = data.parseLink(link);
     var channel;
-    try{ post = channel = await interaction.client.channels.fetch(channelId);
+    try{ channel = await interaction.client.channels.fetch(channelId);
     }catch{await interaction.reply({//failure response
         content: "I'm sorry, but something seems to be wrong with that link.",
         ephemeral: true

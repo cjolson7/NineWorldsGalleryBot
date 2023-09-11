@@ -53,7 +53,7 @@ const data = {
     },
     collectorsUp: (collectors)=>{ return helpers.collectorTracker("activated", collectors+1); },
     collectorsDown: (collectors)=>{ return helpers.collectorTracker("stopped", collectors-1); },
-    getCrosspost: async (embed, interaction)=>{
+    getCrosspost: async (embed, interaction)=>{//take a single embed (either builder or existing) and get the crosspost if it's in the links
         const linkField = embed.data.fields.find(f => f.name === "Links").value;
         if(linkField.includes("Gallery")){//Original or Original / (Victoria's) Gallery
             //get the corresponding post from the links
@@ -64,7 +64,7 @@ const data = {
             const crossChannel = await interaction.client.channels.fetch(crossChannelId); //get channel
             return await crossChannel.messages.fetch(crossMessageId); //get post and return
         }else{
-            return;//return nothing if not a crosspost
+            return;//return nothing if no crosspost link
         }
     },
 }
