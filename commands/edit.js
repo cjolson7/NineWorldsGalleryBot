@@ -9,6 +9,7 @@ module.exports = {
 		.setDescription('Fix the title and/or description of one of your posted pieces.')
 		.addStringOption(option => option.setName('link')
 			.setDescription('Discord link to the posted art (required)')
+			.setMinLength(1)
 			.setRequired(true))
 		.addStringOption(option => option.setName('title')
 			.setDescription('Updated title (optional)')
@@ -36,10 +37,10 @@ module.exports = {
 			.setRequired(false)),
 	async execute(interaction) {
 
-		//parse link and channel to get message
+		//parse link
 		const link = interaction.options.getString('link');
-
-		//i'm sorry, that doesn't seem to be a link
+		
+		//error for bad link
 		if(!(link.startsWith("https://discord.com/channels/"))){//not a discord link
 		await interaction.reply({//failure response
 			content: "I'm sorry, but I don't recognize that link.",
@@ -76,7 +77,7 @@ module.exports = {
 			return //end
 		}
 
-		var embedData = post.embeds[0].data//original embed data 
+		var embedData = post.embeds[0].data//original embed data  //this would have to move down if the above was subfunctioned
 		if (!embedData.fields[0].value.includes(interaction.user.id)) {//compare interaction.user.id to author id - only the author in the embed can make the edit
 			await interaction.reply({//failure response
 				content: "I'm sorry, but you can only edit art that you originally posted.",
