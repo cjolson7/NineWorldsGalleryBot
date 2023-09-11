@@ -5,7 +5,6 @@ const path = require('node:path');
 const data = require('./data.js');
 const postImage = require('./postImage.js').postImage;
 
-
 const client = new Client({
 	intents: [
 		GatewayIntentBits.Guilds,
@@ -30,7 +29,7 @@ for (const file of commandFiles) {
 		console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
 	}
 }
-
+var collectors = 0;//set collector counter on bot start
 client.login(process.env.TOKEN);//start bot
 
 client.on(Events.InteractionCreate, async interaction => {//execute slash commands
@@ -93,6 +92,8 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
           };
 
           const collector = botResponse.createReactionCollector({ filter: collectorFilter, time: data.day*2, dispose: true}); //bot watches the message for 2 days (unless stopped by ✅)
+          collectors = data.collectorsUp(collectors);//increment active collectors and report
+
           //send a message when you detect the ✅, record detecting the others
           collector.on('collect', async (reaction, user) => {
             if (!yesDetected && reaction.emoji.name === '🇾') yesDetected=true; //use detector vars to know when they're clicked
@@ -102,6 +103,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
             if (!doneDetected && reaction.emoji.name === '✅') {
               doneDetected=true; //this one only reacts the first time and doesn't care if it's removed
               collector.stop();//turn off the collector after it receives this emoji
+              collectors = data.collectorsDown(collectors);//decrement active collectors and report
             }
           });
 
@@ -128,7 +130,8 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                 if(spoilerFiles.length>0){//if they did not choose spoiler but any of the images have a spoiler
                   const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === data.yesEmoji || reaction.emoji.name === data.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster
                   const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: timeout, dispose: true}); //bot watches for a reaction
-                  
+                  collectors = data.collectorsUp(collectors);//increment active collectors and report
+
                   //edits the prompt and reacts to its own message
                   await botResponse.edit({content: data.unspoilerCheck})
                   botResponse.react(data.yesEmoji); 
@@ -137,9 +140,10 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                   unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
                     if(reaction.emoji.name === data.yesEmoji) unspoiler = true;
                     unspoilerCollector.stop();
+                    collectors = data.collectorsDown(collectors);//decrement active collectors and report
                     finished = true; //callback flag for bot to move on
                   }) 
-                  await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and closed
+                  await data.waitFor(_ => finished === true);//waits for finished to be true, which happectorCountns when collector has gotten an answer and closed
                   }
                 }
               else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
@@ -149,7 +153,8 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                 const replyFilter = (message) => {return (artMessage.author.id === message.author.id && message.reference && message.reference.messageId === botResponse.id)};//filter for a reply from the poster
                 const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: timeout, dispose: true, max: 1})//message collector watches for one reply
                 const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: timeout, dispose: true}); //bot watches for a message or reaction for half a day (unless stopped early)
-                
+                collectors = data.collectorsUp(collectors);//increment active collectors and report
+
                 noCollector.on('collect', () => {
                   noCollector.stop();//stop and move on if the reaction filter collects anything (since it's already filtered down to the one emoji)
                   replyCollector.stop();
@@ -159,7 +164,8 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                   spoilerTag = await replyMessage.content;
                 })
                 await replyCollector.on('end', ()=>{
-                  noCollector.stop() //make sure both collectors stop     
+                  noCollector.stop() //make sure both collectors stop  
+                  collectors = data.collectorsDown(collectors);//decrement active collectors and report
                   finished = true;//when it stops waiting for replies it is done
                 })
 

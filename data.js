@@ -40,6 +40,11 @@ module.exports = {
           else setTimeout(_ => poll(resolve), 200);//checks every 200 ms
         }
         return new Promise(poll)
-      }
-
+      },
+      collectorsUp: (collectors)=>{
+        console.log(`Collector activated. I am currently monitoring ${collectors} collectors.`);
+        return collectors+1;},
+      collectorsDown: (collectors)=>{
+        console.log(`Collector stopped. I am currently monitoring ${collectors} collectors.`);
+        return collectors-1;},
 };
