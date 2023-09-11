@@ -37,23 +37,36 @@ const data = {
             guild,
             channel,
             message].join("/"); //discord links have a standard format
-        },
+    },
     parseLink: (link)=>{
         var fields = link.split('/')//discord links are a series of ids separated by slashes - discord/server/channel/message
         const messageId = fields.pop(); //id is the last field 
         const channelId = fields.pop(); //channel is the next to last
         return [messageId, channelId];
-        },
+    },
     waitFor: (condition)=>{//conditional waiting function, doesn't move on until it detects its condition
         const poll = resolve => {
         if(condition()) resolve();
         else setTimeout(_ => poll(resolve), 200);//checks every 200 ms
         }
         return new Promise(poll)
-        },
+    },
     collectorsUp: (collectors)=>{ return helpers.collectorTracker("activated", collectors+1); },
     collectorsDown: (collectors)=>{ return helpers.collectorTracker("stopped", collectors-1); },
-}
+    getCrosspost: async (embed, interaction)=>{
+        const linkField = embed.data.fields.find(f => f.name === "Links").value;
+        if(linkField.includes("Gallery")){//Original or Original / (Victoria's) Gallery
+            //get the corresponding post from the links
+            var crossLink = linkField.split("(").pop();//get link
+            crossLink = crossLink.replace(")","")//trim end
+            const [crossMessageId, crossChannelId] = data.parseLink(crossLink);
 
+            const crossChannel = await interaction.client.channels.fetch(crossChannelId); //get channel
+            return await crossChannel.messages.fetch(crossMessageId); //get post and return
+        }else{
+            return;//return nothing if not a crosspost
+        }
+    },
+}
 
 module.exports = {data, helpers};

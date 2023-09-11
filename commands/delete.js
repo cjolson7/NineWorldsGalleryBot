@@ -43,7 +43,13 @@ module.exports = {
 				var buttonInteractionText;
 				if (buttonInteration.customId === 'delete') {
 					buttonInteractionText = "Okay, I've deleted it!";
+					//find out if the post has a pair in the other gallery
+
 					await post.delete();//delete the post
+
+					//delete the other one, too
+
+					buttonInteractionText = "Okay, I've deleted this post in both galleries!"
 				}
 				else if (buttonInteration.customId == 'cancel') {
 					buttonInteractionText = "Okay, I won't delete it!";

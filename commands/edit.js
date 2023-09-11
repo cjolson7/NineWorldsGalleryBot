@@ -1,6 +1,7 @@
 require('dotenv').config();
 const moment = require('moment');
 const {data} = require('../data.js');
+const galleryLinkErrors = require('../galleryLinkErrors.js').galleryLinkErrors;
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
@@ -37,54 +38,10 @@ module.exports = {
 			.setRequired(false)),
 	async execute(interaction) {
 
-		//parse link
-		const link = interaction.options.getString('link');
-		
-		//error for bad link
-		if(!(link.startsWith("https://discord.com/channels/"))){//not a discord link
-		await interaction.reply({//failure response
-			content: "I'm sorry, but I don't recognize that link.",
-			ephemeral: true
-		});
-		return //end 
-		}
-
-		//parse link and get channel
-		[messageId, channelId] = data.parseLink(link);
-		const channel = await interaction.client.channels.cache.get(channelId); //get channel
-
-		//link channel should be one it has access to
-		if(!channel.viewable){
-			await interaction.reply({//failure response
-				content: "I'm sorry, but that link goes somewhere I cannot.",
-				ephemeral: true
-			});
-			return //end
-		}
-
-		//get post 
-		const post = await channel.messages.fetch(messageId);
-		
-		//get gallery channels
-		const galleryChannels = [process.env.VICTORIACHANNELID,  process.env.GALLERYCHANNELID]
-
-		//channel should be a gallery channel and poster should be the bot
-		if(post.author.id != process.env.BOTID || !(galleryChannels.includes(channelId))){
-			await interaction.reply({//failure response
-				content: "I'm sorry, but I can only edit art that I've posted in my galleries.",
-				ephemeral: true
-			});
-			return //end
-		}
-
-		var embedData = post.embeds[0].data//original embed data  //this would have to move down if the above was subfunctioned
-		if (!embedData.fields[0].value.includes(interaction.user.id)) {//compare interaction.user.id to author id - only the author in the embed can make the edit
-			await interaction.reply({//failure response
-				content: "I'm sorry, but you can only edit art that you originally posted.",
-				ephemeral: true
-			});
-			return //end
-		}
+		var link, post; //generate data from link
+		try{
+			[link, post] = await galleryLinkErrors(interaction, "edit")//try to go parse the link - it's in the interaction data
+		}catch(error){return};//if it can't get the data out, then there was an error handled in the initial interaction and this is done
 
 		//parse title and description
 		const title = interaction.options.getString('title') ?? ""; //defaults to empty string
@@ -94,6 +51,7 @@ module.exports = {
 		const clearDescription = interaction.options.getBoolean('clear_description') ?? false; //defaults to false
 		const clearSpoiler = interaction.options.getBoolean('clear_spoiler') ?? false; //defaults to false
 		
+		//if there isn't a positive response other than the link
 		if (title.length<1 && description.length<1 && spoilerTag.length<1 && !clearTitle && !clearDescription && !clearSpoiler) {
 			await interaction.reply({//failure response
 				content: "I'm sorry, but you do need to give me something to change.",
@@ -102,6 +60,7 @@ module.exports = {
 			return //end
 
 		} else {//actually edit
+			var embedData = post.embeds[0].data//original embed data
 			const timestamp = moment(embedData.timestamp).valueOf()//parse and convert to unix stamp
 			const newEmbed = new EmbedBuilder()//preserve old data
 				.setColor(embedData.color)
@@ -151,18 +110,9 @@ module.exports = {
 
 			post.edit({ embeds: [newEmbed] });//edit embed
 
-			//check if there is a crosspost
-			const linkField = newEmbed.data.fields.find(f => f.name === "Links").value;
-			if(linkField.includes("Gallery")){//Original or Original / (Victoria's) Gallery
-				//get the corresponding post from the links
-				var crossLink = linkField.split("(").pop();//get link
-				crossLink = crossLink.replace(")","")//trim end
-				const [crossMessageId, crossChannelId] = data.parseLink(crossLink);
-
-				const crossChannel = await interaction.client.channels.cache.get(crossChannelId); //get channel
-				const crossPost = await crossChannel.messages.fetch(crossMessageId); //get post
-
-				//get links field from crossPost to use in embed 
+			//check if there is a crosspost - send the embed and the interaction context for searching for a post
+			const crossPost = await data.getCrosspost(newEmbed, interaction)
+			if(crossPost){
 				const crossLinkData = crossPost.embeds[0].fields.find(f => f.name === "Links").value;	
 				newEmbed.data.fields.find(f => f.name === "Links").value = crossLinkData;
 
