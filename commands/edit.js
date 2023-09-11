@@ -33,7 +33,7 @@ module.exports = {
 		.addBooleanOption(option => option.setName('clear_description')
 			.setDescription('Remove description from gallery post (optional)')
 			.setRequired(false)) 
-		.addBooleanOption(option => option.setName('clear_spoiler')
+		.addBooleanOption(option => option.setName('clear_spoiler_tag')
 			.setDescription('Remove spoiler tag from gallery post (optional)')
 			.setRequired(false)),
 	async execute(interaction) {
