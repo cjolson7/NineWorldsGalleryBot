@@ -42,9 +42,8 @@ module.exports = {
 	
 				var buttonInteractionText;
 				if (buttonInteration.customId === 'delete') {
-					buttonInteractionText = "Okay, I'll delete it right away!";
-		
-					post.delete();//delete the post
+					buttonInteractionText = "Okay, I've deleted it!";
+					await post.delete();//delete the post
 				}
 				else if (buttonInteration.customId == 'cancel') {
 					buttonInteractionText = "Okay, I won't delete it!";
