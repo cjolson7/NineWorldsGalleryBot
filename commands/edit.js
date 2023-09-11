@@ -1,6 +1,6 @@
 require('dotenv').config();
 const moment = require('moment');
-const data = require('../data.js');
+const {data} = require('../data.js');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {

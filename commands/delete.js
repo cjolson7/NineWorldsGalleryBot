@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { SlashCommandBuilder } = require('discord.js');
-const data = require('../data.js');
+const {data} = require('../data.js');
 const galleryLinkErrors = require('../galleryLinkErrors.js').galleryLinkErrors;
 
 module.exports = {

@@ -2,7 +2,7 @@ require('dotenv').config();
 const { Client, Collection, Events, GatewayIntentBits, } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
-const data = require('./data.js');
+const {data, helpers} = require('./data.js');
 const postImage = require('./postImage.js').postImage;
 
 const client = new Client({
@@ -128,17 +128,17 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                 const filenames = artMessage.attachments.map((a)=>{return a.url.split('/').pop()}) //array of filenames
                 const spoilerFiles = filenames.filter(file => file.includes("SPOILER_")); //subset of array that contains the number that are already spoilered
                 if(spoilerFiles.length>0){//if they did not choose spoiler but any of the images have a spoiler
-                  const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === data.yesEmoji || reaction.emoji.name === data.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster
+                  const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster
                   const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: timeout, dispose: true}); //bot watches for a reaction
                   collectors = data.collectorsUp(collectors);//increment active collectors and report
 
                   //edits the prompt and reacts to its own message
                   await botResponse.edit({content: data.unspoilerCheck})
-                  botResponse.react(data.yesEmoji); 
-                  botResponse.react(data.noEmoji); 
+                  botResponse.react(helpers.yesEmoji); 
+                  botResponse.react(helpers.noEmoji); 
 
                   unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
-                    if(reaction.emoji.name === data.yesEmoji) unspoiler = true;
+                    if(reaction.emoji.name === helpers.yesEmoji) unspoiler = true;
                     unspoilerCollector.stop();
                     collectors = data.collectorsDown(collectors);//decrement active collectors and report
                     finished = true; //callback flag for bot to move on

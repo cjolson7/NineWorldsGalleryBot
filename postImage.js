@@ -1,6 +1,6 @@
 const {EmbedBuilder } = require('discord.js');
 require('dotenv').config();
-const data = require('./data.js');
+const {data} = require('./data.js');
 
 async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspoiler){
 
