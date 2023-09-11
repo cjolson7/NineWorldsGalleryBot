@@ -193,11 +193,3 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
     else pingMessage.reply(data.noImageMessage); //report if no images found in either ping message or reply
   }
 });
-
-process.on('exit', ()=>{ //shutdown code test 1
-  console.log("you turned me off. goodbye!")
-});//
-
-process.on('SIGINT', ()=>{ //shutdown code test 2
-  console.log("you pressed ctrl+c. goodbye!")
-});//
