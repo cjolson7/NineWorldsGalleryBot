@@ -194,10 +194,10 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
   }
 });
 
-client.on('exit', ()=>{ //shutdown code test 1
+process.on('exit', ()=>{ //shutdown code test 1
   console.log("you turned me off. goodbye!")
 });//
 
-client.on('SIGINT', ()=>{ //shutdown code test 2
+process.on('SIGINT', ()=>{ //shutdown code test 2
   console.log("you pressed ctrl+c. goodbye!")
 });//
