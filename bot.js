@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, Collection, Events, GatewayIntentBits, } = require('discord.js');
+const { Client, Collection, Events, GatewayIntentBits, GuildEmojiRoleManager, } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const {data, helpers} = require('./data.js');
@@ -29,6 +29,7 @@ for (const file of commandFiles) {
 		console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
 	}
 }
+
 var collectors = 0;//set collector counter on bot start
 client.login(process.env.TOKEN);//start bot
 
@@ -56,6 +57,28 @@ client.on(Events.InteractionCreate, async interaction => {//execute slash comman
 
 client.on("ready", () => {//when the bot first logs in
   console.log(`Logged in as ${client.user.tag}!`)
+
+  //connect to message list file on startup and turn it into a list of discord links
+  fs.readFile('watchedposts.txt', (err, contents) => {
+    if(err) throw err;
+    var cachedLinks = contents.toString().replaceAll("\r","").split("\n");//trim and split to make neat list
+      cachedLinks.forEach(async link => {//try each link
+      if(data.linkRegex.test(link)){//check if the link parses
+        var [cachedMessageId, cachedChannelId] = data.parseLink(link); //parse link
+        var cachedChannel;
+        try{ cachedChannel = await client.channels.cache.get(cachedChannelId);}catch{return};//get channel or skip
+        if(cachedChannel.viewable){//channel should be viewable
+          var cachedPost
+          try{cachedPost = await cachedChannel.messages.fetch(cachedMessageId);}catch{return};
+          if(cachedPost.embeds.length<1 && cachedPost.attachments.size<1 && cachedPost.author.id == process.env.BOTID){//should be a bot post without art or embeds
+            await cachedPost.edit({content: data.genericEndMessage});
+            console.log("test")
+          }
+        }
+      }
+    })
+  });
+
 })
 
 client.on("messageCreate", async pingMessage => {//respond to messages where the bot is pinged and there is art
@@ -187,7 +210,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
               }
               replaceMessage = confirmationMessage//prepare to edit in the message
             }
-            else{replaceMessage = data.unknownEndReason}//any other reason gets a default response
+            else{replaceMessage = data.genericEndMessage}//any other reason gets a default response
 
             await botResponse.edit({content: replaceMessage, embeds: []})//edit its message
           });

@@ -28,7 +28,7 @@ const data = {
         "If you use 🇳 (or ignore me long enough), I'll move on without a tag.",
     spoilerField:"Spoiler Tag",//don't change this one, field names should be stable!
     timeout: "I've timed out, so I won't take responses here. Call me again if you need me!",
-    unknownEndReason: "I am no longer watching this message. Call me again if you need me!",
+    genericEndMessage: "I am no longer watching this message. Please call me again if you need me!",
     day: 24*helpers.hour,//24 hours
     ephemeralTimeout: helpers.hour/2, //half an hour
     linkRegex: /^https:\/\/discord.com\/channels\/[0-9]{17,19}\/[0-9]{17,19}\/[0-9]{17,19}\/?$/,
