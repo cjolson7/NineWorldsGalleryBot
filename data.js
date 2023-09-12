@@ -61,11 +61,11 @@ const data = {
         //await fs.appendFile(helpers.filename, link+"\n", (err) => {if(err) console.log(err);});//log error if any
         return helpers.collectorTracker("activated", collectors+1); },//increment collector counter and return
     collectorsDown: async (collectors, channelId, messageId)=>{//read in whole file
-        await fs.readFile(helpers.filename, (err, contents) => {if(err) console.log(err);//log error if any
-        const link = helpers.generateLink(process.env.GUILDID, channelId, messageId) //generate discord link
-        const updatedContents = contents.toString().replace(link,"").trim();//replace first instance of that link in the file with nothing
+        // await fs.readFile(helpers.filename, (err, contents) => {if(err) console.log(err);//log error if any
+        // const link = helpers.generateLink(process.env.GUILDID, channelId, messageId) //generate discord link
+        // const updatedContents = contents.toString().replace(link,"").trim();//replace first instance of that link in the file with nothing
         //fs.writeFile(helpers.filename, updatedContents, (err)=>{if(err) console.log(err);})//overwrite file with updated contents
-        });
+        // });
         return helpers.collectorTracker("stopped", collectors-1); },//decrement collectors and return
     getCrosspost: async (embed, interaction)=>{//take a single embed (either builder or existing) and get the crosspost if it's in the links
         const linkField = embed.data.fields.find(f => f.name === "Links").value;
