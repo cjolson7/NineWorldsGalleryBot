@@ -55,7 +55,7 @@ const data = {
         }
         return new Promise(poll)
     },
-    collectorsUp: (channelId, messageId, collectors)=>{
+    collectorsUp: (collectors, channelId, messageId)=>{
         const link = generateLink(process.env.GUILDID, channelId, messageId) //generate discord link
         //write the link on a new line of the tracker file
         fs.appendFile(helpers.filename, link+"\n", (err) => {if(err) console.log(err);});//log error if any
