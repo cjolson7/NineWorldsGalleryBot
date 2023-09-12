@@ -15,7 +15,7 @@ const helpers = {
             channel,
             message].join("/"); //discord links have a standard format
     },
-    filename: 'watchedposts.txt'
+    filename: 'watchedPosts.txt'
 }
   
 const data = {
