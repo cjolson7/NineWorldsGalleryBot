@@ -1,3 +1,6 @@
+require('dotenv').config();
+const fs = require('node:fs');
+
 const helpers = {
     yesEmoji:"👍",
     noEmoji:"👎",
@@ -5,7 +8,14 @@ const helpers = {
         console.log(`Collector ${verb}. I am currently monitoring ${collectors} collectors.`);
         return collectors;
     },
-    hour: 1000*60*60,//hour in milliseconds
+    hour: 1000*60*60,//hour in milliseconds,
+    generateLink: (guild, channel, message)=>{
+        return ["https://discord.com/channels",
+            guild,
+            channel,
+            message].join("/"); //discord links have a standard format
+    },
+    filename: 'watchedposts.txt'
 }
   
 const data = {
@@ -32,12 +42,6 @@ const data = {
     day: 24*helpers.hour,//24 hours
     ephemeralTimeout: helpers.hour/2, //half an hour
     linkRegex: /^https:\/\/discord.com\/channels\/[0-9]{17,19}\/[0-9]{17,19}\/[0-9]{17,19}\/?$/,
-    generateLink: (guild, channel, message)=>{
-        return ["https://discord.com/channels",
-            guild,
-            channel,
-            message].join("/"); //discord links have a standard format
-    },
     parseLink: (link)=>{
         var fields = link.split('/')//discord links are a series of ids separated by slashes - discord/server/channel/message
         const messageId = fields.pop(); //id is the last field 
@@ -51,7 +55,11 @@ const data = {
         }
         return new Promise(poll)
     },
-    collectorsUp: (collectors)=>{ return helpers.collectorTracker("activated", collectors+1); },
+    collectorsUp: (channelId, messageId, collectors)=>{
+        const link = generateLink(process.env.GUILDID, channelId, messageId) //generate discord link
+        //write the link on a new line of the tracker file
+        fs.appendFile(helpers.filename, link+"\n", (err) => {if(err) console.log(err);});//log error if any
+        return helpers.collectorTracker("activated", collectors+1); },//increment collector counter and return
     collectorsDown: (collectors)=>{ return helpers.collectorTracker("stopped", collectors-1); },
     getCrosspost: async (embed, interaction)=>{//take a single embed (either builder or existing) and get the crosspost if it's in the links
         const linkField = embed.data.fields.find(f => f.name === "Links").value;

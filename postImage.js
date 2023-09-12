@@ -1,6 +1,6 @@
 const {EmbedBuilder } = require('discord.js');
 require('dotenv').config();
-const {data} = require('./data.js');
+const {data, helpers} = require('./data.js');
 
 async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspoiler){
 
@@ -13,7 +13,7 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspo
     //strip @Bot from post content
     var messageContent = artMessage.content.replace(`<@${process.env.BOTID}>`, "");
 
-    const artLink = data.generateLink(
+    const artLink = helpers.generateLink(
         process.env.GUILDID, 
         artMessage.channel.id, 
         artMessage.id); //create link to original post
@@ -59,7 +59,7 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspo
         var galleryPost;
         var victoriaLink;
         await postingChannels[0].send(artPost).then(sent => { //make link to posted message
-            galleryLink = data.generateLink(process.env.GUILDID, process.env.GALLERYCHANNELID, sent.id)
+            galleryLink = helpers.generateLink(process.env.GUILDID, process.env.GALLERYCHANNELID, sent.id)
             galleryPost = sent; //save first post
         });
 
@@ -68,7 +68,7 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspo
             artPost.embeds[0].data.fields.find(f => f.name === "Links").value = originalLink +  ` / [Gallery](${galleryLink})`;
             
             await postingChannels[1].send(artPost).then(sent => { //make link
-                victoriaLink = data.generateLink(process.env.GUILDID, process.env.VICTORIACHANNELID, sent.id)
+                victoriaLink = helpers.generateLink(process.env.GUILDID, process.env.VICTORIACHANNELID, sent.id)
                 //now edit the original post with this data
                 embed.data.fields.find(f => f.name === "Links").value = originalLink +  ` / [Victoria's Gallery](${victoriaLink})`;
                 galleryPost.edit({ embeds: [embed] });//edit first post

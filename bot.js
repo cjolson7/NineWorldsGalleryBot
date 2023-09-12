@@ -59,8 +59,7 @@ client.on("ready", () => {//when the bot first logs in
   console.log(`Logged in as ${client.user.tag}!`)
 
   //connect to message list file on startup and turn it into a list of discord links
-  fs.readFile('watchedposts.txt', (err, contents) => {
-    if(err) throw err;
+  fs.readFile(helpers.filename, (err, contents) => {if(err) console.log(err);//log error if any
     var cachedLinks = contents.toString().replaceAll("\r","").split("\n");//trim and split to make neat list
       cachedLinks.forEach(async link => {//try each link
       if(data.linkRegex.test(link)){//check if the link parses
@@ -70,14 +69,18 @@ client.on("ready", () => {//when the bot first logs in
         if(cachedChannel.viewable){//channel should be viewable
           var cachedPost
           try{cachedPost = await cachedChannel.messages.fetch(cachedMessageId);}catch{return};
-          if(cachedPost.embeds.length<1 && cachedPost.attachments.size<1 && cachedPost.author.id == process.env.BOTID){//should be a bot post without art or embeds
+          if(cachedPost.embeds.length<1 && cachedPost.attachments.size<1 && cachedPost.author.id == process.env.BOTID &&
+             cachedChannelId != process.env.GALLERYCHANNELID && cachedChannelId != process.env.GALLERYCHANNELID){
+            //should be a bot post without art or embeds that is not in a gallery
             await cachedPost.edit({content: data.genericEndMessage});
-            console.log("test")
+            console.log("edited old post!")
           }
         }
       }
     })
   });
+  //after processing it all, dump the file
+  fs.writeFile(helpers.filename, "", (err)=>{if(err) console.log(err);})//log error if any
 
 })
 
