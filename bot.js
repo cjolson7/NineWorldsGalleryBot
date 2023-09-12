@@ -69,19 +69,17 @@ client.on("ready", () => {//when the bot first logs in
         if(cachedChannel.viewable){//channel should be viewable
           var cachedPost
           try{cachedPost = await cachedChannel.messages.fetch(cachedMessageId);}catch{return};
-          if(cachedPost.embeds.length<1 && cachedPost.attachments.size<1 && cachedPost.author.id == process.env.BOTID &&
-             cachedChannelId != process.env.GALLERYCHANNELID && cachedChannelId != process.env.GALLERYCHANNELID){
+          if(cachedPost.embeds.length<1 && cachedPost.attachments.size<1 && cachedPost.author.id == process.env.BOTID){
             //should be a bot post without art or embeds that is not in a gallery
             await cachedPost.edit({content: data.genericEndMessage});
-            console.log("edited old post!")
+            console.log("edited untracked post!")
           }
         }
       }
     })
+    //after processing it all, dump the file
+    fs.writeFile(helpers.filename, "", (err)=>{if(err) console.log(err);})//log error if any
   });
-  //after processing it all, dump the file
-  fs.writeFile(helpers.filename, "", (err)=>{if(err) console.log(err);})//log error if any
-
 })
 
 client.on("messageCreate", async pingMessage => {//respond to messages where the bot is pinged and there is art
@@ -106,7 +104,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
       var victoriaDetected=false;
       var doneDetected=false;
 
-      artMessage.reply(data.artResponseMessage(artMessage.author.id)).then((botResponse) => {//send the message, including user reference
+      artMessage.reply(data.artResponseMessage(artMessage.author.id)).then(async (botResponse) => {//send the message, including user reference
           botResponse.react('🇾');
           botResponse.react('🔒');
           botResponse.react('✍️');
@@ -118,7 +116,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
           };
 
           const collector = botResponse.createReactionCollector({ filter: collectorFilter, time: data.day*2, dispose: true}); //bot watches the message for 2 days (unless stopped by ✅)
-          collectors = data.collectorsUp(collectors, botResponse.channelId, botResponse.messageId);//increment active collectors and report
+          collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id);//increment active collectors and report
 
           //send a message when you detect the ✅, record detecting the others
           collector.on('collect', async (reaction, user) => {
@@ -139,7 +137,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
           });
           
           collector.on('end', async (collected, reason) => {//edit instruction message on collector stop
-            collectors = data.collectorsDown(collectors, botResponse.channelId, botResponse.messageId);//decrement active collectors on end and report
+            collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id);//decrement active collectors on end and report
 
             var replaceMessage;
             if(reason === 'time' && !yesDetected){replaceMessage = data.timeout}//edit post on timeout
@@ -155,9 +153,9 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                 const filenames = artMessage.attachments.map((a)=>{return a.url.split('/').pop()}) //array of filenames
                 const spoilerFiles = filenames.filter(file => file.includes("SPOILER_")); //subset of array that contains the number that are already spoilered
                 if(spoilerFiles.length>0){//if they did not choose spoiler but any of the images have a spoiler
+                  collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id);//increment active collectors and report
                   const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster
                   const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: timeout, dispose: true}); //bot watches for a reaction
-                  collectors = data.collectorsUp(collectors, botResponse.channelId, botResponse.messageId);//increment active collectors and report
 
                   //edits the prompt and reacts to its own message
                   await botResponse.edit({content: data.unspoilerCheck})
@@ -170,9 +168,9 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                     finished = true; //callback flag for bot to move on
                   });
                   
-                  unspoilerCollector.on('end', ()=>{collectors = data.collectorsDown(collectors, botResponse.channelId, botResponse.messageId);});//decrement active collectors and report on end                 
+                  unspoilerCollector.on('end', async ()=>{collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id);});//decrement active collectors and report on end                 
                   
-                  await data.waitFor(_ => finished === true);//waits for finished to be true, which happectorCountns when collector has gotten an answer and closed
+                  await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and closed
                   }
                 }
               else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
@@ -182,7 +180,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                 const replyFilter = (message) => {return (artMessage.author.id === message.author.id && message.reference && message.reference.messageId === botResponse.id)};//filter for a reply from the poster
                 const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: timeout, dispose: true, max: 1})//message collector watches for one reply
                 const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: timeout, dispose: true}); //bot watches for a message or reaction for half a day (unless stopped early)
-                collectors = data.collectorsUp(collectors, botResponse.channelId, botResponse.messageId);//increment active collectors and report
+                collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id);//increment active collectors and report 
 
                 noCollector.on('collect', () => {
                   noCollector.stop();//stop and move on if the reaction filter collects anything (since it's already filtered down to the one emoji)
@@ -192,9 +190,9 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                 replyCollector.on('collect', async (replyMessage) => {//change this function, it doesn't like on collect
                   spoilerTag = await replyMessage.content;
                 })
-                await replyCollector.on('end', ()=>{
+                await replyCollector.on('end', async ()=>{
                   noCollector.stop() //make sure both collectors stop  
-                  collectors = data.collectorsDown(collectors, botResponse.channelId, botResponse.messageId);//decrement active collectors and report
+                  collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id);//decrement active collectors and report
                   finished = true;//when it stops waiting for replies it is done
                 })
 

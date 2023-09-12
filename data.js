@@ -55,16 +55,16 @@ const data = {
         }
         return new Promise(poll)
     },
-    collectorsUp: (collectors, channelId, messageId)=>{
-        const link = generateLink(process.env.GUILDID, channelId, messageId) //generate discord link
+    collectorsUp: async (collectors, channelId, messageId)=>{
+        const link = helpers.generateLink(process.env.GUILDID, channelId, messageId) //generate discord link
         //write the link on a new line of the tracker file
-        fs.appendFile(helpers.filename, link+"\n", (err) => {if(err) console.log(err);});//log error if any
+        //await fs.appendFile(helpers.filename, link+"\n", (err) => {if(err) console.log(err);});//log error if any
         return helpers.collectorTracker("activated", collectors+1); },//increment collector counter and return
-    collectorsDown: (collectors)=>{//read in whole file
-        fs.readFile(helpers.filename, (err, contents) => {if(err) console.log(err);//log error if any
-        const link = generateLink(process.env.GUILDID, channelId, messageId) //generate discord link
-        const updatedContents = contents.toString().replace(link,"");//replace first instance of that link in the file with nothing
-        fs.writeFile(helpers.filename, updatedContents, (err)=>{if(err) console.log(err);})//overwrite file with updated contents
+    collectorsDown: async (collectors, channelId, messageId)=>{//read in whole file
+        await fs.readFile(helpers.filename, (err, contents) => {if(err) console.log(err);//log error if any
+        const link = helpers.generateLink(process.env.GUILDID, channelId, messageId) //generate discord link
+        const updatedContents = contents.toString().replace(link,"").trim();//replace first instance of that link in the file with nothing
+        //fs.writeFile(helpers.filename, updatedContents, (err)=>{if(err) console.log(err);})//overwrite file with updated contents
         });
         return helpers.collectorTracker("stopped", collectors-1); },//decrement collectors and return
     getCrosspost: async (embed, interaction)=>{//take a single embed (either builder or existing) and get the crosspost if it's in the links
