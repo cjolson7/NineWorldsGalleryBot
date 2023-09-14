@@ -16,7 +16,7 @@ module.exports = {
 		const followupText = "You can click the buttons to learn more about how I work, or click Done.";
 		const doneText = "Alright! Call me if you need me!";
 		const editText = "If you call '/edit' and give me a link to one of your art posts in either of my galleries, I can fix it for you! "+
-			"Currently I can change or remove titles, descriptions, and spoiler tags. Note that remove and change are different - I have string inputs for new info, and True/False inputs for just removing it."+
+			"Currently I can change or remove titles, descriptions, and spoiler tags. Note that remove and change are different - I have text inputs for new info, and True/False inputs for just removing it."+
 			"If the piece is posted in both galleries, I will fix both posts (I do this using the links!). "+
 			"I can only edit my posts in my galleries, and only when /edit is called by the original artist credited in the gallery post.";
 		const deleteText = "If you call '/delete' and give me a link to one of your art posts in one of my galleries, I can remove it for you! "+
