@@ -13,7 +13,7 @@ module.exports = {
 		});
 
 		//generate explanation text
-		const followupText = "You can click the buttons to learn more about how I work, or click Done.",
+		const followupText = "You can click the buttons to learn more about how I work, or click Done.";
 		const doneText = "Alright! Call me if you need me!";
 		const editText = "If you call '/edit' and give me a link to one of your art posts in either of my galleries, I can fix it for you! "+
 			"Currently I can change or remove titles, descriptions, and spoiler tags. Note that remove and change are different - I have string inputs for new info, and True/False inputs for just removing it."+
