@@ -182,8 +182,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                 
                 unspoilerCollector.on('end', async ()=>{collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);});//decrement active collectors and report (edit file, no longer tracking post)                 
                 
-                await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and closed
-                }
+                await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and close
               }
               else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
                 await botResponse.edit({content: data.spoilerMessage})//edit its message to ask for spoiler text
