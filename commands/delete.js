@@ -38,10 +38,10 @@ module.exports = {
 			ephemeral: true
 		}).then((sent)=>{
 			const buttonCollector = sent.createMessageComponentCollector({ time: data.ephemeralTimeout });//30 min timeout
-			buttonCollector.on('collect', async buttonInteration => {
+			buttonCollector.on('collect', async buttonInteraction => {
 	
 				var buttonInteractionText;
-				if (buttonInteration.customId === 'delete') {
+				if (buttonInteraction.customId === 'delete') {
 					buttonInteractionText = "Okay, I've deleted it!";
 					//find out if the post has a pair in the other gallery
 					const crossPost = await data.getCrosspost(post.embeds[0], interaction)
@@ -53,11 +53,11 @@ module.exports = {
 					}
 					await post.delete();//delete the original post
 				}
-				else if (buttonInteration.customId == 'cancel') {
+				else if (buttonInteraction.customId == 'cancel') {
 					buttonInteractionText = "Okay, I won't delete it!";
 				}
 	
-				await buttonInteration.update({ content: buttonInteractionText, components: [] })//remove buttons and update with comfirm text
+				await buttonInteraction.update({ content: buttonInteractionText, components: [] })//remove buttons and update with comfirm text
 			});
 	
 	
