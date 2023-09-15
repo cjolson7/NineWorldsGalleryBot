@@ -3,7 +3,7 @@ const {data, helpers} = require('./data.js');
 const postImage = require('./postImage.js').postImage;
 
 const mainTimeout = data.day*2;//timeouts for collectors - 48 hours for initial ping, 12 hours for clarification
-const clarificationTimeout = 10000//data.day/2
+const clarificationTimeout = data.day/2
 var collectors; //global variable tracking current number of collectors
 
 const startCountingCollectors = ()=>{collectors = 0};//start collector value at 0
@@ -117,7 +117,7 @@ const unspoilerCollector = async (artistId, botResponse, reinitialize)=>{
 
     if(reinitialize){//check emoji on reinitialize - collector may not be needed
         console.log("checking existing emoji")
-    }
+    }else{//temporary else block for emoji check
 
     collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file for clarification collector)
 
@@ -135,6 +135,7 @@ const unspoilerCollector = async (artistId, botResponse, reinitialize)=>{
     await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and close
 
     return unspoiler;//return unspoiler status
+}
 }
 
 const spoilerCollector = async (artistId, botResponse, reinitialize)=>{

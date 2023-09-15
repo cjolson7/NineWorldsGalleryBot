@@ -3,7 +3,7 @@ const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const {data, helpers} = require('./data.js');
-const {artCollector, startCountingCollectors} = require('./collectors.js');
+const {artCollector, startCountingCollectors, unspoilerCollector} = require('./collectors.js');
 //const postImage = require('./postImage.js').postImage;
 
 const client = new Client({//set up basic context with relevant action permissions
@@ -76,17 +76,28 @@ client.on("ready", () => {//when the bot first logs in
           if(cachedPost.embeds.length<1 && cachedPost.attachments.size<1 && cachedPost.author.id == process.env.BOTID){
             const repliedTo = cachedPost.reference; //reference to the replied to message (cached post should be a bot reply to art)
             if (repliedTo){//check that the reference exists
-              const artMessage = await pingChannel.messages.fetch(repliedTo.messageId);//get the referenced message
+              var artMessage;
+              try{artMessage = await cachedChannel.messages.fetch(repliedTo.messageId);}catch{return}//get referenced message or skip
               if (artMessage.attachments.size > 0 && artMessage.author.id!=process.env.BOTID){//check that the reference message has art and is not by the bot
-                //use the content of the bot's to determine its status
-                if(cachedPost.content===data.artResponseMessage(artMessage.author.id)) console.log("untracked post is main message")
-                else if(cachedPost.content===data.spoilerMessage) console.log("untracked post is spoiler message")
-                else if(cachedPost.content===data.unspoilerCheck) console.log("untracked post is unspoiler message")
+                
+                var stillEdit = true;//TEMP
 
-                await cachedPost.edit({content: data.genericEndMessage});//edit post with unwatched message (this is the part that will be replaced)
+                //use the content of the bot's post to determine its status
+                if(cachedPost.content===data.artResponseMessage(artMessage.author.id)) {console.log("untracked post is main message")
+                }
+                else if(cachedPost.content===data.spoilerMessage) {console.log("untracked post is spoiler message")
+                }
+                else if(cachedPost.content===data.unspoilerCheck) {
+                  console.log("untracked post is unspoiler message")
+                  stillEdit = false;
+                  unspoilerCollector(artMessage.author.id, cachedPost, true)
+                }
+                
+                if(stillEdit)await cachedPost.edit({content: data.genericEndMessage});//edit post with unwatched message (this is the part that will be replaced)
 
                 untrackedPosts += 1; //count post as being acted on
               }
+            }
           }
         }
       }
