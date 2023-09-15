@@ -9,7 +9,6 @@ var collectors; //global variable tracking current number of collectors
 const startCountingCollectors = ()=>{collectors = 0};//start collector value at 0
 
 const artCollector = async (client, artMessage, botResponse, reinitialize) => {
-    console.log("collectors at start: "+collectors)
     //takes in the art post, the bot's response message, collector tracker, and whether this is a new collector or a reinitialization
     //whole art post is needed, its contents are relevant for posting and unspoilering
     var finished = false;//stopper variable for full collection waiting
@@ -106,7 +105,6 @@ const artCollector = async (client, artMessage, botResponse, reinitialize) => {
       else{replaceMessage = data.genericEndMessage}//any other collector end reason gets a default response
 
       await botResponse.edit({content: replaceMessage, embeds: []});//edit in final message status
-      console.log("collectors at end: "+collectors)
       finished = true;//set callback variable to allow return to progress
     });
 }

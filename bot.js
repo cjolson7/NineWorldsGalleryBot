@@ -71,12 +71,22 @@ client.on("ready", () => {//when the bot first logs in
         try{ cachedChannel = await client.channels.cache.get(cachedChannelId);}catch{return};//get channel or skip
         if(cachedChannel.viewable){//channel should be viewable
           var cachedPost
-          try{cachedPost = await cachedChannel.messages.fetch(cachedMessageId);}catch{return};
+          try{cachedPost = await cachedChannel.messages.fetch(cachedMessageId);}catch{return};//get message or skip
+          //should be a bot post without art or embeds that is not in a gallery
           if(cachedPost.embeds.length<1 && cachedPost.attachments.size<1 && cachedPost.author.id == process.env.BOTID){
-            //should be a bot post without art or embeds that is not in a gallery
-            untrackedPosts += 1;
-            //use the content of the post to determine its status
-            await cachedPost.edit({content: data.genericEndMessage});
+            const repliedTo = cachedPost.reference; //reference to the replied to message (cached post should be a bot reply to art)
+            if (repliedTo){//check that the reference exists
+              const artMessage = await pingChannel.messages.fetch(repliedTo.messageId);//get the referenced message
+              if (artMessage.attachments.size > 0 && artMessage.author.id!=process.env.BOTID){//check that the reference message has art and is not by the bot
+                //use the content of the bot's to determine its status
+                if(cachedPost.content===data.artResponseMessage(artMessage.author.id)) console.log("untracked post is main message")
+                else if(cachedPost.content===data.spoilerMessage) console.log("untracked post is spoiler message")
+                else if(cachedPost.content===data.unspoilerCheck) console.log("untracked post is unspoiler message")
+
+                await cachedPost.edit({content: data.genericEndMessage});//edit post with unwatched message (this is the part that will be replaced)
+
+                untrackedPosts += 1; //count post as being acted on
+              }
           }
         }
       }
@@ -94,8 +104,8 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
 
   if(pingMessage.mentions.has(process.env.BOTID, {ignoreRepliedUser: true, ignoreEveryone: true})){//if bot is mentioned (ignore replies and @here/@everyone)
 
-    var pingChannel = pingMessage.channel; //the channel it was pinged in
-    var repliedTo = pingMessage.reference; //the referenced (replied to) message if any
+    const pingChannel = pingMessage.channel; //the channel it was pinged in
+    const repliedTo = pingMessage.reference; //the referenced (replied to) message if any
     var artMessage = pingMessage; //by default, the message being worked on is the one where the bot was pinged
 
     if (repliedTo){//if there is a reply reference, find the reply message
