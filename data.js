@@ -35,7 +35,7 @@ const data = {
         yesMessage +=". If you need to fix things later, you can always use /edit!"; //end
         return yesMessage; 
     },
-    unspoilerCheck: "You didn't say to add spoilers, but at least one image here is already spoilered. Would you like me to post your art with all image spoilers removed?\n\n"+
+    unspoilerCheck: "You didn't ask me to add spoilers, but at least one image here is already spoilered. Would you like me to post your art with all image spoilers removed?\n\n"+
         `Please tell me ${helpers.yesEmoji} or ${helpers.noEmoji}`,
     spoilerMessage: "Do you want to add a spoiler tag to the gallery post? You can reply to this post with the spoiler tag.\n\n"+
         "If you use 🇳 (or ignore me long enough), I'll move on without a tag.",
@@ -73,7 +73,7 @@ const data = {
             fs.writeFile(helpers.filename, updatedContents, (err)=>{if(err) console.log(err);})//overwrite file with updated contents
             });
         }
-        return helpers.collectorTracker("stopped", collectors-1); },//decrement collectors and return
+        return await helpers.collectorTracker("stopped", collectors-1); },//decrement collectors and return
     getCrosspost: async (embed, interaction)=>{//take a single embed (either builder or existing) and get the crosspost if it's in the links
         const linkField = embed.data.fields.find(f => f.name === "Links").value;
         if(linkField.includes("Gallery")){//Original or Original / (Victoria's) Gallery

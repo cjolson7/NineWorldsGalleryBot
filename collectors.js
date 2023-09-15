@@ -4,10 +4,15 @@ const postImage = require('./postImage.js').postImage;
 
 const mainTimeout = data.day*2;//timeouts for collectors - 48 hours for initial ping, 12 hours for clarification
 const clarificationTimeout = 10000//data.day/2
+var collectors; //global variable tracking current number of collectors
 
-const artCollector = async (artMessage, botResponse, collectors, reinitialize) => {
+const startCountingCollectors = ()=>{collectors = 0};//start collector value at 0
+
+const artCollector = async (client, artMessage, botResponse, reinitialize) => {
+    console.log("collectors at start: "+collectors)
     //takes in the art post, the bot's response message, collector tracker, and whether this is a new collector or a reinitialization
     //whole art post is needed, its contents are relevant for posting and unspoilering
+    var finished = false;//stopper variable for full collection waiting
 
     var yesDetected=false; //set up emoji tracker variables
     var spoilerDetected=false;
@@ -37,7 +42,7 @@ const artCollector = async (artMessage, botResponse, collectors, reinitialize) =
         }
       });
 
-      collector.on('remove', (reaction, user) => {
+      collector.on('remove', (reaction) => {
         if (yesDetected && reaction.emoji.name === '🇾') yesDetected=false; //toggle detector vars on remove
         if (spoilerDetected && reaction.emoji.name === '🔒') spoilerDetected=false;
         if (victoriaDetected && reaction.emoji.name === '✍️') victoriaDetected=false;
@@ -100,10 +105,10 @@ const artCollector = async (artMessage, botResponse, collectors, reinitialize) =
       }
       else{replaceMessage = data.genericEndMessage}//any other collector end reason gets a default response
 
-      await botResponse.edit({content: replaceMessage, embeds: []})//edit in whatever the confirmation is
+      await botResponse.edit({content: replaceMessage, embeds: []});//edit in final message status
+      console.log("collectors at end: "+collectors)
+      finished = true;//set callback variable to allow return to progress
     });
-
-
 }
 
 const unspoilerCollector = async (artistId, botResponse, collectors, reinitialize)=>{
@@ -169,4 +174,4 @@ const spoilerCollector = async (artistId, botResponse, collectors, reinitialize)
     return [spoilerTag, collectors];//return spoiler tag for use in posting, collectors for tracking
 }
 
-module.exports = {artCollector, unspoilerCollector, spoilerCollector};
+module.exports = {artCollector, unspoilerCollector, spoilerCollector, startCountingCollectors};
