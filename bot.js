@@ -75,6 +75,7 @@ client.on("ready", () => {//when the bot first logs in
           if(cachedPost.embeds.length<1 && cachedPost.attachments.size<1 && cachedPost.author.id == process.env.BOTID){
             //should be a bot post without art or embeds that is not in a gallery
             untrackedPosts += 1;
+            //use the content of the post to determine its status
             await cachedPost.edit({content: data.genericEndMessage});
           }
         }
@@ -82,7 +83,7 @@ client.on("ready", () => {//when the bot first logs in
       processed++;//count processed links after all ifs/awaits (tracks whether the loop is done)
       if(processed === cachedLinks.length)  {
         //after processing it all, log the count and dump the file
-        console.log(`Edited ${untrackedPosts} untracked ` + (untrackedPosts===1 ? "post" : "posts" + "!"));
+        console.log(`Restarted monitoring of ${untrackedPosts} ` + (untrackedPosts===1 ? "post" : "posts" + "!"));
         fs.writeFile(helpers.filename, "", (err)=>{if(err) console.log(err);})//log error if any
       }
     })

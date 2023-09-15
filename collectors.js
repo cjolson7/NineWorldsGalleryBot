@@ -80,7 +80,7 @@ const artCollector = async (client, artMessage, botResponse, reinitialize) => {
             botResponse.react(helpers.noEmoji); 
 
             //run response collector, return unspoiler and collector tracking (false for initialization)
-            [unspoiler, collectors] = await unspoilerCollector(artMessage.author.id, botResponse, collectors, false);
+            unspoiler = await unspoilerCollector(artMessage.author.id, botResponse, false);
             //unspoiler is reused safely because it gets a new default in the collector function
           }
           else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
@@ -88,7 +88,7 @@ const artCollector = async (client, artMessage, botResponse, reinitialize) => {
             botResponse.react('🇳'); //add reaction
 
             //run response collector, return unspoiler and collector tracking (false for initialization)
-            [spoilerTag, collectors] = await spoilerCollector(artMessage.author.id, botResponse, collectors, false);
+            spoilerTag = await spoilerCollector(artMessage.author.id, botResponse, false);
         }
 
         //if yes, make the posts!
@@ -111,7 +111,7 @@ const artCollector = async (client, artMessage, botResponse, reinitialize) => {
     });
 }
 
-const unspoilerCollector = async (artistId, botResponse, collectors, reinitialize)=>{
+const unspoilerCollector = async (artistId, botResponse, reinitialize)=>{
     //takes in the art post's author, the bot's response message, collector tracker, and whether this is a new collector or a reinitialization
 
     var finished = false;//stopper variable for secondary collector waiting
@@ -136,10 +136,10 @@ const unspoilerCollector = async (artistId, botResponse, collectors, reinitializ
                 
     await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and close
 
-    return [unspoiler, collectors];
+    return unspoiler;//return unspoiler status
 }
 
-const spoilerCollector = async (artistId, botResponse, collectors, reinitialize)=>{
+const spoilerCollector = async (artistId, botResponse, reinitialize)=>{
     //takes in the art post's author, the bot's response message, collector tracker, and whether this is a new collector or a reinitialization
 
     var finished = false;//stopper variable for secondary collector waiting
@@ -171,7 +171,7 @@ const spoilerCollector = async (artistId, botResponse, collectors, reinitialize)
 
     await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collectors have gotten their answers and closed
 
-    return [spoilerTag, collectors];//return spoiler tag for use in posting, collectors for tracking
+    return spoilerTag;//return spoiler tag for use in posting
 }
 
 module.exports = {artCollector, unspoilerCollector, spoilerCollector, startCountingCollectors};
