@@ -174,33 +174,15 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
                 botResponse.react(helpers.yesEmoji); 
                 botResponse.react(helpers.noEmoji); 
 
-                [unspoiler, collectors] = await unspoilerCollector(artMessage.author.id, botResponse, collectors, false);//run response collector, return unspoiler and collector tracking (false for initialization)
-
-                //calls collector (first time)
-                // collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file)
-                // const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster
-                // const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: timeout, dispose: true}); //bot watches for a reaction
-
-                // //edits the prompt and reacts to its own message
-                // await botResponse.edit({content: data.unspoilerCheck})
-                // botResponse.react(helpers.yesEmoji); 
-                // botResponse.react(helpers.noEmoji); 
-
-                // unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
-                //   if(reaction.emoji.name === helpers.yesEmoji) unspoiler = true;
-                //   unspoilerCollector.stop();
-                //   finished = true; //callback flag for bot to move on
-                // });
-                
-                // unspoilerCollector.on('end', async ()=>{collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);});//decrement active collectors and report (edit file, no longer tracking post)                 
-                
-                // await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and close
+                //run response collector, return unspoiler and collector tracking (false for initialization)
+                [unspoiler, collectors] = await unspoilerCollector(artMessage.author.id, botResponse, collectors, false);
               }
               else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
                 await botResponse.edit({content: data.spoilerMessage})//edit its message to ask for spoiler text
                 botResponse.react('🇳'); //add reaction
 
-                [spoilerTag, collectors] = await spoilerCollector(artMessage.author.id, botResponse, collectors, false);//run response collector, return unspoiler and collector tracking (false for initialization)
+                //run response collector, return unspoiler and collector tracking (false for initialization)
+                [spoilerTag, collectors] = await spoilerCollector(artMessage.author.id, botResponse, collectors, false);
               }
 
               //if yes, make the posts!
