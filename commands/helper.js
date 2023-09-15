@@ -1,96 +1,110 @@
 require('dotenv').config();
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const {data} = require('../data.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('helper')
 		.setDescription('What do I do?'),
 	async execute(interaction) {
-		await interaction.reply({//initial message
-			content: 'Hi! My job is to record your art!\n\n'+
-			"If you ping me in an image post or in a reply to an image post, I can add that image to my gallery.\n\n",
-			ephemeral: true
-		});
-
-		//generate explanation text
-		const followupText = "You can click the buttons to learn more about how I work, or click Done.";
+		
+		//command and explanation text
+		const initialResponse = 'Hi! My job is to record your art!\n\n'+
+		"If you ping me in an image post or in a reply to an image post, I can add that image to my gallery.\n\n"+
+		"You can click the buttons to learn more about how I work, or click Done.";
 		const doneText = "Alright! Call me if you need me!";
-		const editText = "If you call '/edit' and give me a link to one of your art posts in either of my galleries, I can fix it for you! "+
-			"Currently I can change or remove titles, descriptions, and spoiler tags. "+
-			"Note that remove and change are different - I have text inputs for new info, and True/False inputs for just removing it."+
-			"If the piece is posted in both galleries, I will fix both posts (I do this using the links!). "+
-			"I can only edit posts that I made in my galleries, and only when /edit is called by the original artist credited in the gallery post.";
-		const deleteText = "If you call '/delete' and give me a link to one of your art posts in one of my galleries, I can remove it for you! "+
-			`Currently, I remove any crossposted posts in both galleries. `+
-			`If you accidentally shared it with Victoria, you'll need to ask me to repost it in <#${process.env.GALLERYCHANNELID}>`;
-		const spoilerText = "Sometimes I need clarification about what people want me to do with spoilers, to make sure my gallery is as well organized as possible. "+
-			"If you don't ask me to spoiler an image but it's spoilered in the original post, I'll offer to remove the spoiler. This won't change anything else about the image. "+
-			"If you do ask me to spoiler an image, I'll ask you to reply to me with a spoiler tag. " +
-			"Spoilers are more helpful when people have info about when they're safe to click!"
-		const timeoutText = "When I post a response to an artist, I watch the emojis on that post for 48 hours or until I get a ✅ from the artist. "+
-			"If I don't have a 🇾 from the artist after 48 hours, I don't post anything. If I *do* get a 🇾 but the artist never clicks ✅, I post the art when I finish waiting."+
-			"If I need clarification about spoiler tags or unspoilering, I'll wait for 12 hours after asking and then post as-is if they didn't tell me anything more. " +
-			"I edit posts once I'm done watching them so that no one gets confused. "+
-			"I lose track of the posts I'm watching if I go down for maintenance, but to make things nice and clear I edit them all to say so when I come back online!";
-		const userText = "I check discord user ids when I respond to art, and when I make gallery posts. "+
-			"Only the original poster of an image can consent for me to post it or ask me to edit or delete it. "+
+		const editText = "If you call '/edit' and give me a link to one of your art posts in either of my galleries, I can fix it for you!\n\n"+
+			"I can only edit the art posts in my galleries, and only when /edit is called by the original artist credited in the gallery post.\n\n"+	
+			"Currently I can change or remove titles, descriptions, and spoiler tags.\n\n"+
+			"Note that remove and change are different - I have text inputs for updating info and True/False inputs for removing it.\n\n"+
+			"If the piece is posted in both galleries, I will fix both posts (I do this using the links!).";
+		const deleteText = "If you call '/delete' and give me a link to one of your art posts in one of my galleries, I can remove it for you!\n\n"+
+			`Currently this command removes crossposted art from both galleries. `+
+			`If you want to remove only Victoria's copy of a post, you can delete both and call me to repost.`;
+		const spoilerText = "Sometimes I need clarification about what people want me to do with spoilers, to make sure my gallery is as well organized as possible.\n\n"+
+			"You don't need to spoiler Nine Worlds content in my galleries, but please do spoiler nsfw or potentially upsetting material.\n\n"+
+			"If you don't ask me to spoiler an image but it's spoilered in the original post, I'll offer to remove the spoiler. This won't change anything else about the image.\n\n"+
+			"If you do ask me to spoiler an image, I'll ask you to reply to me with a spoiler tag. Spoilers are more helpful when people have info about when they're safe to click!"
+		const timeoutText = "When I post a response to an artist, I watch the emojis on that post for 48 hours or until I get a ✅ from the artist.\n\n"+
+			"If I don't have a 🇾 from the artist after 48 hours, I don't post anything. If I *do* get a 🇾 but they never click ✅, I'll post the art when I finish waiting.\n\n"+
+			"If I need clarification about spoiler tags or unspoilering, I'll wait for 12 hours after asking, then post as-is if they don't tell me anything more.\n\n" +
+			"I edit posts once I'm done watching them so that no one gets confused.\n\n"+
+			"I lose track of the posts I'm watching if I go down for maintenance, but I edit them all to say so when I come back online!";
+		const userText = "I check discord user ids when I respond to art, and when I make gallery posts.\n\n"+
+			"Only the original poster of an image can consent for me to post it or ask me to edit or delete it.\n\n"+
 			"(The mods can always delete things, of course.) If someone else replies to or reacts to me when I'm waiting on the artist, I'll just ignore them.";
+		const moreText = "You can click any of these to learn about how I work, or click done!"
 
 		//set up array of explanations and buttonids for easy iteration (done is a special case and does not need to be in here)
-		const buttonData = [{id:'edit', content: editText}, {id:'delete', content: deleteText}, {id:'spoiler', content: spoilerText}, {id:'timeout', content: timeoutText}, {id:'userid', content: userText}]
+		const buttonData = [[{id:'done', content: doneText}, {id:'more', content: moreText}],
+			[{id:'edit', content: editText}, {id:'delete', content: deleteText}, {id:'spoiler', content: spoilerText}],
+			[{id:'timeout', content: timeoutText}, {id:'userid', content: userText}]];
+		//only 5 buttons allowed in a row, and two of them are "more" and "done" - separate into sets of three
 
-		//set up buttons
+		//set up buttons - labels are arbitrary/visual, but ids are referenced again later
 		const doneButton = new ButtonBuilder()
-			.setCustomId('done')
-			.setLabel('done')
+			.setCustomId(buttonData[0][0].id)
+			.setLabel('Done')
+			.setStyle(ButtonStyle.Primary);
+
+		const moreButton = new ButtonBuilder()
+			.setCustomId(buttonData[0][1].id)
+			.setLabel('More Buttons')
 			.setStyle(ButtonStyle.Primary);
 
 		const editButton = new ButtonBuilder()
-			.setCustomId(buttonData[0].id)
+			.setCustomId(buttonData[1][0].id)
 			.setLabel('/edit')
 			.setStyle(ButtonStyle.Secondary)
 
 		const deleteButton = new ButtonBuilder()
-			.setCustomId(buttonData[1].id)
+			.setCustomId(buttonData[1][1].id)
 			.setLabel('/delete')
 			.setStyle(ButtonStyle.Secondary);
 
 		const spoilerButton = new ButtonBuilder()
-			.setCustomId(buttonData[2].id)
+			.setCustomId(buttonData[1][2].id)
 			.setLabel('spoilers')
 			.setStyle(ButtonStyle.Secondary);
 
 		const timeoutButton = new ButtonBuilder()
-			.setCustomId(buttonData[3].id)
+			.setCustomId(buttonData[2][0].id)
 			.setLabel('timeouts')
 			.setStyle(ButtonStyle.Secondary);
 
 		const userButton = new ButtonBuilder()
-			.setCustomId(buttonData[4].id)
+			.setCustomId(buttonData[2][1].id)
 			.setLabel('user ids')
 			.setStyle(ButtonStyle.Secondary);
 
 
-		const buttonRow = new ActionRowBuilder()
-			.addComponents(doneButton, editButton, deleteButton, userButton, spoilerButton, timeoutButton);
+		const buttonRow1 = new ActionRowBuilder()
+			.addComponents(doneButton, moreButton, editButton, deleteButton, spoilerButton, );
+		const buttonRow2 = new ActionRowBuilder()
+			.addComponents(doneButton, moreButton, timeoutButton, userButton);
+		const buttonRows = [buttonRow1, buttonRow2]; //list makes them iterable with currentRow-1 as index
+		var currentRow = 1; //start on row 1, switch on more
 
 		await interaction.reply({
-			content: followupText,
-			components: [buttonRow],
+			content: initialResponse,
+			components: [buttonRow1],
 			ephemeral: true
 		}).then((sent)=>{
 			const buttonCollector = sent.createMessageComponentCollector({ time: data.ephemeralTimeout*2 });//60 min timeout
 			buttonCollector.on('collect', async buttonInteraction => {
 	
-				var buttonInteractionText;
-				if (buttonInteraction.customId === 'done') {
+				if (buttonInteraction.customId === buttonData[0][0].id) {//done
 					await buttonInteraction.update({ content: doneText, components: [] })//remove buttons and update with comfirm text
 					return //end
+				}else if (buttonInteraction.customId === buttonData[0][1].id) {//more
+					currentRow++;//add 1 to current row
+					if(currentRow>2) currentRow = 1;//if current row >2, reset to 1 (overflow allows more rows if needed)
+					await buttonInteraction.update({ content: moreText, components: [buttonRows[currentRow-1]] })//change to other row of buttons
 				}
 				else {
-					buttonData.forEach(async (button)=>{//iterate through buttons
+					buttonData[currentRow].forEach(async (button)=>{//if it isn't more or done, iterate through buttons on the current row
 							if (buttonInteraction.customId === button.id) {//check each id, act on the matching one
-								await buttonInteraction.update({ content: button.content })//update with text, do not remove buttons
+								await buttonInteraction.update({ content: button.content })//update text, no need to return or change buttons
 							}
 						})
 					}
