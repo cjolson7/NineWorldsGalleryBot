@@ -30,7 +30,7 @@ module.exports = {
 			.setStyle(ButtonStyle.Secondary);
 
 		const buttonRow = new ActionRowBuilder()
-			.addComponents(cancel, confirm);
+			.addComponents(confirm, cancel);
 
 		await interaction.reply({
 			content: `Are you sure that you want to delete [this post?](${link})`,
@@ -42,15 +42,16 @@ module.exports = {
 	
 				var buttonInteractionText;
 				if (buttonInteraction.customId === 'delete') {
-					buttonInteractionText = "Okay, I've deleted it!";
+					buttonInteractionText = "Okay, I've deleted it";
 					//find out if the post has a pair in the other gallery
 					const crossPost = await data.getCrosspost(post.embeds[0], interaction)
 
 					//delete the crosspost if it exists
 					if(crossPost){
 						await crossPost.delete();
-						buttonInteractionText = "Okay, I've deleted this post in both galleries!"
+						buttonInteractionText += " in both galleries!"//add to replystring
 					}
+					buttonInteractionText += "!";//finish reply string
 					await post.delete();//delete the original post
 				}
 				else if (buttonInteraction.customId == 'cancel') {
