@@ -6,7 +6,7 @@ const {data, helpers} = require('./data.js');
 const {artCollector, startCountingCollectors} = require('./collectors.js');
 //const postImage = require('./postImage.js').postImage;
 
-const client = new Client({
+const client = new Client({//set up basic context with relevant action permissions
 	intents: [
 		GatewayIntentBits.Guilds,
 		GatewayIntentBits.GuildMessages,
@@ -103,13 +103,8 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
         artMessage = flaggedMessage;} //if there is an image in the ref message, and it wasn't posted by this bot, choose that message
     }
 
-    //if there wasn't a reply, or wasn't art in the reply, we're still on the ping message - check for an image again before proceeding
+    //if there wasn't a reply, or wasn't art in the reply, we're still on the ping message - check image and author again before proceeding
     if (artMessage.attachments.size > 0 && artMessage.author.id!=process.env.BOTID) {
-
-      var yesDetected=false; //set up emoji tracker variables
-      var spoilerDetected=false;
-      var victoriaDetected=false;
-      // var doneDetected=false;
 
       artMessage.reply(data.artResponseMessage(artMessage.author.id)).then(async (botResponse) => {//send the message, including user reference
           botResponse.react('🇾');
