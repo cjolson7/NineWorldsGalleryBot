@@ -166,56 +166,41 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
               
               var confirmationMessage = data.noMessage; //default response is no 
               var spoilerTag; //needs to exist as blank even when not updated
-              const timeout = data.day/2 //consistent timeout
-              var finished = false;//reuse stopper variable since spoiler cases are contradictory
 
-              if(unspoiler){//now track unspoiler clarification - initial setup already in place
-                collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file)
-                const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster
-                const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: timeout, dispose: true}); //bot watches for a reaction
+              if(unspoiler){//unspoiler clarification - initial logical check was earlier
 
                 //edits the prompt and reacts to its own message
                 await botResponse.edit({content: data.unspoilerCheck})
                 botResponse.react(helpers.yesEmoji); 
                 botResponse.react(helpers.noEmoji); 
 
-                unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
-                  if(reaction.emoji.name === helpers.yesEmoji) unspoiler = true;
-                  unspoilerCollector.stop();
-                  finished = true; //callback flag for bot to move on
-                });
+                [unspoiler, collectors] = await unspoilerCollector(artMessage.author.id, botResponse, collectors, false);//run response collector, return unspoiler and collector tracking (false for initialization)
+
+                //calls collector (first time)
+                // collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file)
+                // const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster
+                // const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: timeout, dispose: true}); //bot watches for a reaction
+
+                // //edits the prompt and reacts to its own message
+                // await botResponse.edit({content: data.unspoilerCheck})
+                // botResponse.react(helpers.yesEmoji); 
+                // botResponse.react(helpers.noEmoji); 
+
+                // unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
+                //   if(reaction.emoji.name === helpers.yesEmoji) unspoiler = true;
+                //   unspoilerCollector.stop();
+                //   finished = true; //callback flag for bot to move on
+                // });
                 
-                unspoilerCollector.on('end', async ()=>{collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);});//decrement active collectors and report (edit file, no longer tracking post)                 
+                // unspoilerCollector.on('end', async ()=>{collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);});//decrement active collectors and report (edit file, no longer tracking post)                 
                 
-                await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and close
+                // await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and close
               }
               else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
                 await botResponse.edit({content: data.spoilerMessage})//edit its message to ask for spoiler text
                 botResponse.react('🇳'); //add reaction
 
-                [spoilerTag, collectors] = await spoilerCollector(artMessage.author.id, botResponse, collectors, false);//run collector for reactions, return spoiler and collector data 
-
-                // const noFilter = (reaction, user) => {return (reaction.emoji.name === '🇳' && user.id === artMessage.author.id)};//filter for 🇳 emoji by original poster
-                // const replyFilter = (message) => {return (artMessage.author.id === message.author.id && message.reference && message.reference.messageId === botResponse.id)};//filter for a reply from the poster
-                // const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: timeout, dispose: true, max: 1})//message collector watches for one reply
-                // const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: timeout, dispose: true}); //bot watches for a message or reaction for half a day (unless stopped early)
-                // collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file)
-
-                // noCollector.on('collect', () => {
-                //   noCollector.stop();//stop and move on if the reaction filter collects anything (since it's already filtered down to the one emoji)
-                //   replyCollector.stop();
-                // }) //stop reply collector, too
-
-                // replyCollector.on('collect', async (replyMessage) => {//change this function, it doesn't like on collect
-                //   spoilerTag = await replyMessage.content;
-                // })
-                // await replyCollector.on('end', async ()=>{
-                //   noCollector.stop() //make sure both collectors stop  
-                //   collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);//decrement active collectors and report (edit file, no longer tracking post)
-                //   finished = true;//when it stops waiting for replies it is done
-                // })
-
-                // await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collectors have gotten their answers and closed
+                [spoilerTag, collectors] = await spoilerCollector(artMessage.author.id, botResponse, collectors, false);//run response collector, return unspoiler and collector tracking (false for initialization)
               }
 
               //if yes, make the posts!
