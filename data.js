@@ -19,8 +19,11 @@ const helpers = {
 }
   
 const data = {
-    artResponseMessage: (artistId) => {return "Hi, <@" + artistId + ">! It looks like you posted some art! Please react with 🇾 if you want me to put it in my gallery. (You can edit it there later if you'd like.)\n\n" +
-    	"You can use 🔒 to tell me to spoiler it when I post it. If you add ✍️, I\'ll share it with Victoria as well.\n\n" +
+    artResponseMessage: (artistId) => {return "Hi, <@" + artistId + ">! It looks like you posted some art! Please react with 🇾 if you want me to put it in my gallery. " +
+        "(You can edit it there later if you'd like.)\n\n" +
+        "You can use 🔒 to tell me to spoiler it when I post it. Please be aware that the galleries are spoiler-anarchy zones. Use your best judgement about nsfw or potentially " +
+        "upsetting material, but you don't have to avoid Nine Worlds spoilers. I can even remove spoilers from things that don't need to be hidden in the gallery!\n\n" +
+        "If you add ✍️, I\'ll share it with Victoria as well.\n\n" +
     	"When you're done reacting, or if you don't want me to post, please click ✅ to tell me to move on."},
     noMessage: "Okay, I won't post this image to the gallery. Thanks for telling me!",
     noImageMessage: "Sorry, I don't see any images there for me to record.",
