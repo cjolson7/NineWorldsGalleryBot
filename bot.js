@@ -59,8 +59,9 @@ client.on("ready", () => {//when the bot first logs in
   console.log(`Logged in as ${client.user.tag}!`)
 
   //connect to message list file on startup and turn it into a list of discord links
-  var untrackedPosts = 0;//counter
-  fs.readFile(helpers.filename, (err, contents) => {if(err) console.log(err);//log error if any
+  var untrackedPosts = 0;
+  var processed = 0; //counters
+  fs.readFile(helpers.filename, async (err, contents) => {if(err) console.log(err);//log error if any
     var cachedLinks = contents.toString().replaceAll("\r","").split("\n");//trim and split to make neat list
       cachedLinks.forEach(async link => {//try each link
       if(data.linkRegex.test(link)){//check if the link parses
@@ -72,16 +73,19 @@ client.on("ready", () => {//when the bot first logs in
           try{cachedPost = await cachedChannel.messages.fetch(cachedMessageId);}catch{return};
           if(cachedPost.embeds.length<1 && cachedPost.attachments.size<1 && cachedPost.author.id == process.env.BOTID){
             //should be a bot post without art or embeds that is not in a gallery
-            untrackedPosts+=1
+            untrackedPosts += 1;
             await cachedPost.edit({content: data.genericEndMessage});
           }
         }
       }
+      processed++;//count processed links after all ifs/awaits (tracks whether the loop is done)
+      if(processed === cachedLinks.length)  {
+        //after processing it all, log the count and dump the file
+        console.log(`Edited ${untrackedPosts} untracked ` + (untrackedPosts===1 ? "post" : "posts" + "!"));
+        fs.writeFile(helpers.filename, "", (err)=>{if(err) console.log(err);})//log error if any
+      }
     })
-    //after processing it all, log the count and dump the file
-    console.log(`Edited ${untrackedPosts} untracked ` + untrackedPosts===1 ? "post" : "posts" + "!");
-    fs.writeFile(helpers.filename, "", (err)=>{if(err) console.log(err);})//log error if any
-  });
+  })
 })
 
 client.on("messageCreate", async pingMessage => {//respond to messages where the bot is pinged and there is art
