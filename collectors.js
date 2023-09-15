@@ -18,7 +18,7 @@ const unspoilerCollector = async (artistId, botResponse, collectors, reinitializ
     collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file for clarification collector)
 
     const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji) && user.id === artistId)};//filter for emojis by original poster
-    const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: timeout, dispose: true}); //bot watches for a reaction
+    const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: clarificationTimeout, dispose: true}); //bot watches for a reaction
 
     unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
         if(reaction.emoji.name === helpers.yesEmoji) unspoiler = true;
