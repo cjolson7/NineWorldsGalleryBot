@@ -22,7 +22,7 @@ const data = {
     artResponseMessage: (artistId) => {return "Hi, <@" + artistId + ">! It looks like you posted some art! Please react with 🇾 if you want me to put it in my gallery. " +
         "(You can edit it there later if you'd like.)\n\n" +
         "You can use 🔒 to tell me to spoiler it when I post it. You don't have to spoiler Nine Worlds content in the galleries, but if there's something NSFW or potentially " +
-        "upsetting, please do use a spoiler and tag the reason. (I ask for spoiler tags before posting, and you can /edit them in later if needed!)"
+        "upsetting, please do use a spoiler and tag the reason. (I ask for spoiler tags before posting, and you can /edit them in later if needed!)"+
         "If you add ✍️, I\'ll share it with Victoria as well.\n\n" +
     	"When you're done reacting, or if you don't want me to post, please click ✅ to tell me to move on."},
     noMessage: "Okay, I won't post this image to the gallery. Thanks for telling me!",
