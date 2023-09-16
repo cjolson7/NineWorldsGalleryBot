@@ -166,11 +166,10 @@ const unspoilerCollector = async (artMessage, botResponse, reinitialize)=>{
                 };
                 reinitialized = true;
             }
-            //the other cases are none or both (track remove) - either way run collector as normal but post at the end
+            //the other cases are none or both - either way run collector as normal but post at the end
         })
     }
     if(reinitialize) await data.waitFor(_ => reinitialized === true);//if reinitializing, wait for the reaction loop to complete 
-    console.log("beforecheck:" + collectorNeeded)
     if(collectorNeeded){//don't collect unless needed
         collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, reinitialize);//increment active collectors and report 
         //don't add to file unless this is a reinitialization
@@ -184,15 +183,15 @@ const unspoilerCollector = async (artMessage, botResponse, reinitialize)=>{
             finished = true; //callback flag for bot to move on
         });
 
-        unspoilerCollector.on('remove', (reaction) => {//on removal, if both were already selected, detect which then stop and move on
-            console.log("remove detected!")
-            if(unspoilerYes && unspoilerNo){//if both
-                if(reaction.emoji.name === helpers.yesEmoji) unspoiler = false;
-                if(reaction.emoji.name === helpers.noEmoji) unspoiler = true;//opposite responses since these are removals
-                unspoilerCollector.stop();
-                finished = true; //callback flag for bot to move on
-            }
-        });
+        // unspoilerCollector.on('remove', (reaction) => {//on removal, if both were already selected, detect which then stop and move on
+        //     console.log("remove detected!")
+        //     if(unspoilerYes && unspoilerNo){//if both
+        //         if(reaction.emoji.name === helpers.yesEmoji) unspoiler = false;
+        //         if(reaction.emoji.name === helpers.noEmoji) unspoiler = true;//opposite responses since these are removals
+        //         unspoilerCollector.stop();
+        //         finished = true; //callback flag for bot to move on
+        //     }
+        // }); //does not currently run, fix later
                     
         unspoilerCollector.on('end', async ()=>{
             collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);
@@ -221,8 +220,8 @@ const spoilerCollector = async (artMessage, botResponse, reinitialize)=>{
 
     const noFilter = (reaction, user) => {return (reaction.emoji.name ===  helpers.nEmoji && user.id === artMessage.author.id)};//filter for 🇳 emoji by original poster
     const replyFilter = (reply) => {return (artMessage.author.id === reply.author.id && reply.reference && reply.reference.messageId === botResponse.id)};//filter for a reply from the poster to the bot
-    const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: clarificationTimeout, dispose: true, max: 1})//message collector watches for just the first applicable reply
-    const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: clarificationTimeout, dispose: true}); //reaction collector watches for a 🇳
+    const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: clarificationTimeout, max: 1})//message collector watches for just the first applicable reply
+    const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: clarificationTimeout}); //reaction collector watches for a 🇳
     collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, reinitialize);//increment active collectors and report 
     //don't add to file unless this is a reinitialization
     var spoilerTag;
