@@ -55,9 +55,9 @@ client.on(Events.InteractionCreate, async interaction => {//execute slash comman
 	}
 });
 
-client.on("ready", () => {//when the bot first logs in
+client.on("ready", async () => {//when the bot first logs in
   console.log(`Logged in as ${client.user.tag}!`)
-  startUp(client);//set collector counter and prep gallery channel reference on bot start
+  await startUp(client);//set collector counter and prep gallery channel reference on bot start
 
   //connect to message list file on startup and turn it into a list of discord links
   var untrackedPosts = 0;

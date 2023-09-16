@@ -7,12 +7,12 @@ const clarificationTimeout = data.day/2
 var collectors; //global variable tracking current number of collectors
 var allPostingChannels;//global variable tracking the posting channels
 
-const startUp = ()=>{
+const startUp = async (client)=>{//startup function called when bot activates
     collectors = 0;//start collector value at 0
 
     //set up posting channels
-    const galleryChannel = client.channels.cache.get(process.env.GALLERYCHANNELID); //get gallery channel
-    const victoriaChannel = client.channels.cache.get(process.env.VICTORIACHANNELID); 
+    const galleryChannel = await client.channels.cache.get(process.env.GALLERYCHANNELID); //get gallery channel
+    const victoriaChannel = await client.channels.cache.get(process.env.VICTORIACHANNELID); 
     allPostingChannels = [galleryChannel, victoriaChannel];//get both (narrow to just gallery later based on user selection)
 }
 
