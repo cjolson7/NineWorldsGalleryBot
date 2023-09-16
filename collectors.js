@@ -131,6 +131,7 @@ const finishAndPost = async(reason, artMessage, botResponse, yesDetected, spoile
 const unspoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     //takes in the art post's author, the bot's response message, collector tracker, and whether this is a new collector or a reinitialization
 
+    var reinitialized = false;//stopper variable for reinitialization loop
     var finished = false;//stopper variable for secondary collector waiting
     var unspoiler = false; //default is *not* to unspoiler
 
@@ -141,6 +142,8 @@ const unspoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     var collectorNeeded = true; //whether to run the collector at all - defaults true
 
     if(reinitialize){//check emoji on reinitialize - collector may not be needed
+        console.log("reinitializing")
+        var processed = 0; //counter for loop
         botResponse.reactions.cache.forEach(async(reaction)=>{//iterate through existing reactions - listen for victoria and the two specific to this case
             if(reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji || reaction.emoji.name === helpers.victoriaEmoji ){
                 const reactors = await reaction.users.fetch();//get the people who reacted
@@ -153,21 +156,25 @@ const unspoilerCollector = async (artMessage, botResponse, reinitialize)=>{
                     }
                 })
             }
-        }).then(()=>{
-        console.log(helpers.yesEmoji + ": " + unspoilerYes)
-        console.log(helpers.noEmoji + ": " + unspoilerNo)
-        //if there is only yes or only no, unspoiler can end here and return the answer
-        if (unspoilerYes != unspoilerNo){//if they aren't the same, one is true and the other false
-            console.log("Skipping collector. Sufficient data detected on reinitialization.")
-            unspoiler = unspoilerYes;//unspoiler = unspoilerYes (false if no is true, as it should be)
-            collectorNeeded = false;
-        }});
-        //the other cases are none or both (track remove) - either way run collector as normal but post at the end
+            //if there is only yes or only no after checking all emoji, unspoiler can end here and just post
+            processed++;//count processed emoji at end of each loop(tracks whether the forEach is done)
+            if(processed === botResponse.reactions.cache.size)  {
+                if (unspoilerYes != unspoilerNo){//if they aren't the same, one is true and the other false
+                    console.log("Skipping collector. Sufficient data detected on reinitialization.")
+                    unspoiler = unspoilerYes;//unspoiler = unspoilerYes (false if no is true, as it should be)
+                    collectorNeeded = false;
+                };
+                reinitialized = true;
+            }
+            //the other cases are none or both (track remove) - either way run collector as normal but post at the end
+        })
     }
-
+    if(reinitialize) await data.waitFor(_ => reinitialized === true);//if reinitializing, wait for the reaction loop to complete 
+    console.log("beforecheck:" + collectorNeeded)
     if(collectorNeeded){//don't collect unless needed
-        collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file for clarification collector)
-
+        collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, reinitialize);//increment active collectors and report 
+        //don't add to file unless this is a reinitialization
+    
         const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster
         const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: clarificationTimeout, dispose: true}); //bot watches for a reaction
 
@@ -177,7 +184,8 @@ const unspoilerCollector = async (artMessage, botResponse, reinitialize)=>{
             finished = true; //callback flag for bot to move on
         });
 
-        unspoilerCollector.on('collect', (reaction) => {//on removal, if both were already selected, detect which then stop and move on
+        unspoilerCollector.on('remove', (reaction) => {//on removal, if both were already selected, detect which then stop and move on
+            console.log("remove detected!")
             if(unspoilerYes && unspoilerNo){//if both
                 if(reaction.emoji.name === helpers.yesEmoji) unspoiler = false;
                 if(reaction.emoji.name === helpers.noEmoji) unspoiler = true;//opposite responses since these are removals
@@ -186,7 +194,9 @@ const unspoilerCollector = async (artMessage, botResponse, reinitialize)=>{
             }
         });
                     
-        unspoilerCollector.on('end', async ()=>{collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);});//decrement active collectors and report (edit file, no longer tracking post)                 
+        unspoilerCollector.on('end', async ()=>{
+            collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);
+        });//decrement active collectors and report (edit file, no longer tracking post)                 
                     
         await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and close
     }
@@ -213,7 +223,8 @@ const spoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     const replyFilter = (reply) => {return (artMessage.author.id === reply.author.id && reply.reference && reply.reference.messageId === botResponse.id)};//filter for a reply from the poster to the bot
     const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: clarificationTimeout, dispose: true, max: 1})//message collector watches for just the first applicable reply
     const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: clarificationTimeout, dispose: true}); //reaction collector watches for a 🇳
-    collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file for clarification collector)
+    collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, reinitialize);//increment active collectors and report 
+    //don't add to file unless this is a reinitialization
     var spoilerTag;
 
     noCollector.on('collect', () => {
