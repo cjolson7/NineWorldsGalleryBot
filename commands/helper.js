@@ -35,7 +35,7 @@ module.exports = {
 		const offlineText = "For obvious reasons, I can't detect emojis, pings, or replies while I'm offline for maintenance.\n\n"+
 			"However, I keep track of the posts I'm currently listening to whenever I go down, and I check their emojis when I come back online.\n\n"+
 			"Feel free to react to my posts at any time. Even if I'm not answering now, I'll get it later!\n\n"+
-			"For arbitrary coding reasons, I can't detect emoji being removed after I come back online - you might occasionally have to take one off and re-add it.\n\n"+
+			"For arbitrary coding reasons, I have some trouble with emoji being removed after I come back online - you might occasionally have to take one off and re-add it.\n\n"+
 			"If I'm not responding to a reply or ping, you'll have to send that one again when I'm active. Those are harder to go back for."
 		const moreText = "You can click any of these to learn about how I work."
 

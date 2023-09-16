@@ -40,7 +40,7 @@ const data = {
         yesMessage +=". If you need to fix things later, you can always use /edit!"; //end
         return yesMessage; 
     },
-    unspoilerCheck: "You didn't ask me to add spoilers, but at least one image here is already spoilered. Would you like me to post your art with all image spoilers removed?\n\n"+
+    unspoilerMessage: "You didn't ask me to add spoilers, but at least one image here is already spoilered. Would you like me to post your art with all image spoilers removed?\n\n"+
         `Please tell me ${helpers.yesEmoji} or ${helpers.noEmoji}`,
     spoilerMessage: "Do you want to add a spoiler tag to the gallery post? You can reply to this post with the spoiler tag.\n\n"+
         `If you use ${helpers.nEmoji} (or ignore me long enough), I'll move on without a tag.`,
@@ -94,6 +94,14 @@ const data = {
             return;//return nothing if no crosspost link
         }
     },
+    unspoilerCheck: (attachments)=>{
+        //check unspoiler logic for some image attachments
+        var unspoiler = false;
+        const filenames = attachments.map((a)=>{return a.url.split('/').pop()}) //array of filenames
+        const spoilerFiles = filenames.filter(file => file.includes("SPOILER_")); //subset of array that contains the number that are already spoilered
+        if(spoilerFiles.length>0){unspoiler = true;} //spoiler on image even though spoiler not selected - unspoiler condition is flagged
+        return unspoiler;
+    }
 }
 
 module.exports = {data, helpers};

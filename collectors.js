@@ -16,92 +16,134 @@ const startUp = async (client)=>{//startup function called when bot activates
     allPostingChannels = [galleryChannel, victoriaChannel];//get both (narrow to just gallery later based on user selection)
 }
 
-const artCollector = async (client, artMessage, botResponse, reinitialize) => {
+const artCollector = async (artMessage, botResponse, reinitialize) => {
     //takes in the art post, the bot's response message, collector tracker, and whether this is a new collector or a reinitialization
-    //whole art post is needed, its contents are relevant for posting and unspoilering
 
-    var yesDetected=false; //set up emoji tracker variables
+    //tracking variables for reinitialization case
+    var reinitialized = false;//reinitialization loop stopper
+    var collectorNeeded = true; //whether to run the collector at all - defaults true
+    
+    //set up emoji tracker variables
+    var yesDetected=false; 
     var spoilerDetected=false;
     var victoriaDetected=false;
     var doneDetected = false;
 
     if(reinitialize){//check emoji on reinitialize - collector may not be needed
-        console.log("checking existing emoji")
-    }
-
-    const collectorFilter = (reaction, user) => {//filter for specific emoji and original poster
-        return (reaction.emoji.name === helpers.yEmoji || reaction.emoji.name === helpers.spoilerEmoji || reaction.emoji.name === helpers.victoriaEmoji || 
-            reaction.emoji.name === helpers.checkEmoji) &&user.id === artMessage.author.id;
-      };
-      const collector = botResponse.createReactionCollector({ filter: collectorFilter, time: mainTimeout, dispose: true}); //watch the message for the right emoji
-      collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, true);//increment active collectors and report (do add to file)
-
-      //end on detecting ✅, record detecting the others
-      collector.on('collect', async (reaction, user) => {
-        if (!yesDetected && reaction.emoji.name === helpers.yEmoji) yesDetected=true; //use detector vars to know when they're clicked
-        if (!spoilerDetected && reaction.emoji.name === helpers.spoilerEmoji) spoilerDetected=true;
-        if (!victoriaDetected && reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected=true;
-        
-        if (!doneDetected && reaction.emoji.name === helpers.checkEmoji) {
-          doneDetected=true; //this one only reacts the first time and doesn't care if it's removed
-          collector.stop();//turn off the collector after it receives this emoji
-        }
-      });
-
-      collector.on('remove', (reaction) => {
-        if (yesDetected && reaction.emoji.name === helpers.yEmoji) yesDetected=false; //toggle detector vars on remove
-        if (spoilerDetected && reaction.emoji.name === helpers.spoilerEmoji) spoilerDetected=false;
-        if (victoriaDetected && reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected=false;
-      });
-      
-      collector.on('end', async (collected, reason) => {//edit instruction message on collector stop
-        var editTrackerFile = true; //defaults to true - normal behavior is to edit collector tracker on stop
-        var unspoiler = false;//unspoiler defaults to false
-
-        //check unspoiler status (break up status and collector creation to make file tracking possible)
-        if(yesDetected && !spoilerDetected){//if they did *not* spoiler (but they did say yes, it doesn't otherwise matter) check if any images are spoilered
-          const filenames = artMessage.attachments.map((a)=>{return a.url.split('/').pop()}) //array of filenames
-          const spoilerFiles = filenames.filter(file => file.includes("SPOILER_")); //subset of array that contains the number that are already spoilered
-          if(spoilerFiles.length>0){unspoiler = true;} //spoiler on image even though spoiler not selected - unspoiler condition is flagged
-        }                
-
-        //check if there's going to be another collector opening up
-        if(spoilerDetected || unspoiler){editTrackerFile = false}//in the two conditions where more clarification is needed, don't remove that post link from the tracking list
-
-        collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, editTrackerFile);//decrement active collectors on end and report
-        //file edit is conditional on spoiler conditions - don't remove the post link if another collector is about to start on the exact same post
-
-        var replaceMessage;//determine the new message to edit the post to
-        if(reason === 'time' && !yesDetected){replaceMessage = data.timeout}//indicate timeout stop if no 🇾 response
-        else if(reason === 'user' || (reason === 'time' && yesDetected)){//when a user stops the collector, or it times out with yes, post the image and edit the message
-          
-        //   var confirmationMessage = data.noMessage; //default response is no 
-          var spoilerTag; //needs to exist as blank even when not updated
-
-          if(unspoiler){//unspoiler clarification check follows from earlier logic check
-
-            //edits the prompt and reacts to its own message
-            await botResponse.edit({content: data.unspoilerCheck})
-            botResponse.react(helpers.yesEmoji); 
-            botResponse.react(helpers.noEmoji); 
-
-            //run response collector, return unspoiler and collector tracking (false for initialization)
-            unspoiler = await unspoilerCollector(artMessage, botResponse, false);
-            //unspoiler is reused safely because it gets a new default in the collector function
-          }
-          else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
-            await botResponse.edit({content: data.spoilerMessage})//edit its message to ask for spoiler text
-            botResponse.react(helpers.nEmoji); //add reaction
-
-            //run response collector, return unspoiler and collector tracking (false for initialization)
-            spoilerTag = await spoilerCollector(artMessage, botResponse, false);
+        var processed = 0; //counter for loop
+        botResponse.reactions.cache.forEach(async(reaction)=>{//iterate through existing reactions - listen for the original 4
+            if((reaction.emoji.name === helpers.yEmoji || reaction.emoji.name === helpers.spoilerEmoji || reaction.emoji.name === helpers.victoriaEmoji || 
+                reaction.emoji.name === helpers.checkEmoji) ){
+                const reactors = await reaction.users.fetch();//get the people who reacted
+                reactors.forEach(async (id)=>{//for each person who used each emoji
+                    if(id==artMessage.author.id){//only care about emoji from the artist
+                        if (reaction.emoji.name === helpers.checkEmoji) doneDetected = true     
+                        else if (reaction.emoji.name === helpers.yEmoji) yesDetected = true    
+                        else if (reaction.emoji.name === helpers.spoilerEmoji) spoilerDetected = true    
+                        else if (reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected = true    
+                    }
+                })
             }
-        
-            //feed all collected data into finish and post function!
-            finishAndPost(reason, artMessage, botResponse, yesDetected, spoilerDetected, victoriaDetected, unspoiler, spoilerTag);//make the post!
-        }
+            processed++;//count processed emoji at end of each loop (tracks whether the forEach is done)
+            if(processed === botResponse.reactions.cache.size)  {
+                if (doneDetected){//done is the basic prereq - if done, check whether clarification is needed
+                    //done without Yes, or Yes + Done without spoiler or unspoiler
+                    var unspoiler = data.unspoilerCheck(artMessage.attachments);//check unspoiler status
+                    if(!yesDetected || (yesDetected && !spoilerDetected && !unspoiler)){
+                        console.log("Skipping collector. Sufficient data detected on reinitialization.")
+                        collectorNeeded = false;
+                    } else if(yesDetected && (spoilerDetected || unspoiler)){
+                        console.log("Only secondary collector needed.")
+                        //TODO: skip check so that it knows to stop the collector immediately in the next block
+                        //something is weird here, it doesn't like moving on from this when it should
+                    }
+                };
+                reinitialized = true;
+            }//otherwise run collector normally with existing values for existing emoji
+        })
+    }
+    if(reinitialize) await data.waitFor(_ => reinitialized === true);//if reinitializing, wait for the reaction loop to complete 
+    if(collectorNeeded){//don't run the collector if it's not necessary
 
-    });
+        const collectorFilter = (reaction, user) => {//filter for specific emoji and original poster
+            return (reaction.emoji.name === helpers.yEmoji || reaction.emoji.name === helpers.spoilerEmoji || reaction.emoji.name === helpers.victoriaEmoji || 
+                reaction.emoji.name === helpers.checkEmoji) &&user.id === artMessage.author.id;
+        };
+        const collector = botResponse.createReactionCollector({ filter: collectorFilter, time: mainTimeout, dispose: true}); //watch the message for the right emoji
+        collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, true);
+        //increment active collectors and report (do add to file, even reinitialize has removed it and needs it back)
+
+        //end on detecting ✅, record detecting the others
+        collector.on('collect', async (reaction, user) => {
+            if (!yesDetected && reaction.emoji.name === helpers.yEmoji) yesDetected=true; //use detector vars to know when they're clicked
+            if (!spoilerDetected && reaction.emoji.name === helpers.spoilerEmoji) spoilerDetected=true;
+            if (!victoriaDetected && reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected=true;
+            
+            if (!doneDetected && reaction.emoji.name === helpers.checkEmoji) {
+            doneDetected=true; //this one only reacts the first time and doesn't care if it's removed
+            collector.stop();//turn off the collector after it receives this emoji
+            }
+        });
+
+        collector.on('remove', (reaction) => {
+            console.log("remove detected!")//see if remove runs on reinitialize
+            if (yesDetected && reaction.emoji.name === helpers.yEmoji) yesDetected=false; //toggle detector vars on remove
+            if (spoilerDetected && reaction.emoji.name === helpers.spoilerEmoji) spoilerDetected=false;
+            if (victoriaDetected && reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected=false;
+        });
+        
+        collector.on('end', async (collected, reason) => {//edit instruction message on collector stop
+            var editTrackerFile = true; //defaults to true - normal behavior is to edit collector tracker on stop
+            var unspoiler = false;//unspoiler defaults to false
+
+            //check unspoiler status (break up status and collector creation to make file tracking possible)
+            if(yesDetected && !spoilerDetected){//if they did *not* spoiler (but they did say yes, it doesn't otherwise matter) check if any images are spoilered
+                unspoiler = data.unspoilerCheck(artMessage.attachments);
+            };
+
+            //check if there's going to be another collector opening up
+            if(spoilerDetected || unspoiler){editTrackerFile = false}//in the two conditions where more clarification is needed, don't remove that post link from the tracking list
+
+            collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, editTrackerFile);//decrement active collectors on end and report
+            //file edit is conditional on spoiler conditions - don't remove the post link if another collector is about to start on the exact same post
+
+            var replaceMessage;//determine the new message to edit the post to
+            if(reason === 'time' && !yesDetected){replaceMessage = data.timeout}//indicate timeout stop if no 🇾 response
+            else if(reason === 'user' || (reason === 'time' && yesDetected)){//when a user stops the collector, or it times out with yes, post the image and edit the message
+            
+            //   var confirmationMessage = data.noMessage; //default response is no 
+            var spoilerTag; //needs to exist as blank even when not updated
+
+            if(unspoiler){//unspoiler clarification check follows from earlier logic check
+
+                //edits the prompt and reacts to its own message
+                await botResponse.edit({content: data.unspoilerMessage})
+                botResponse.react(helpers.yesEmoji); 
+                botResponse.react(helpers.noEmoji); 
+
+                //run response collector, return unspoiler and collector tracking (false for initialization)
+                unspoiler = await unspoilerCollector(artMessage, botResponse, false);
+                //unspoiler is reused safely because it gets a new default in the collector function
+            }
+            else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
+                await botResponse.edit({content: data.spoilerMessage})//edit its message to ask for spoiler text
+                botResponse.react(helpers.nEmoji); //add reaction
+
+                //run response collector, return unspoiler and collector tracking (false for initialization)
+                spoilerTag = await spoilerCollector(artMessage, botResponse, false);
+                }
+            
+                //feed all collected data into finish and post function!
+                finishAndPost(reason, artMessage, botResponse, yesDetected, spoilerDetected, victoriaDetected, unspoiler, spoilerTag);//make the post!
+            }
+
+        });
+    }else if(reinitialize){//if collector wasn't needed, finish here
+        //if reinitializing without needing clarification, spoilerTag and unspoiler aren't relevant - default them just in case
+        var unspoiler, spoilerTag;
+        unspoiler = false;
+        finishAndPost(data.manualEndReason, artMessage, botResponse, yesDetected, spoilerDetected, victoriaDetected, unspoiler, spoilerTag);//make the post!
+    }
 }
 
 const finishAndPost = async(reason, artMessage, botResponse, yesDetected, spoilerDetected, victoriaDetected, unspoiler, spoilerTag)=>{
@@ -219,7 +261,6 @@ const spoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     var collectorNeeded = true; //whether to run the collector at all - defaults true
 
     if(reinitialize){//check emoji on reinitialize - collector may not be needed
-        console.log("reinitializing")
         var processed = 0; //counter for loop
         botResponse.reactions.cache.forEach(async(reaction)=>{//iterate through existing reactions - listen for victoria and the specific 🇳 reaction
             if(reaction.emoji.name === helpers.nEmoji || reaction.emoji.name === helpers.victoriaEmoji ){

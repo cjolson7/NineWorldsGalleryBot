@@ -59,9 +59,11 @@ client.on("ready", async () => {//when the bot first logs in
   console.log(`Logged in as ${client.user.tag}!`)
   await startUp(client);//set collector counter and prep gallery channel reference on bot start
 
-  //connect to message list file on startup and turn it into a list of discord links
-  var untrackedPosts = 0;
-  var processed = 0; //counters
+  var reinitializedPosts = 0;//counters
+  var droppedPosts = 0;
+  var processed = 0; 
+
+  //connect to message list file on startup and parse the discord links
   fs.readFile(helpers.filename, async (err, contents) => {if(err) console.log(err);//log error if any
     var cachedLinks = contents.toString().replaceAll("\r","").split("\n");//trim and split to make neat list
       cachedLinks.forEach(async link => {//try each link
@@ -79,25 +81,21 @@ client.on("ready", async () => {//when the bot first logs in
               var artMessage;
               try{artMessage = await cachedChannel.messages.fetch(repliedTo.messageId);}catch{return}//get referenced message or skip
               if (artMessage.attachments.size > 0 && artMessage.author.id!=process.env.BOTID){//check that the reference message has art and is not by the bot
-                
-                var stillEdit = false;//TEMP
 
-                //use the content of the bot's post to determine its status
+                //use the content of the bot's post to determine its status, then run respective collectors with reinitialize flag
                 if(cachedPost.content===data.artResponseMessage(artMessage.author.id)) {
-                  console.log("untracked post is main message")
-                  stillEdit = true;
-                }
+                  artCollector(artMessage, cachedPost, true)
+                  reinitializedPosts++;}
                 else if(cachedPost.content===data.spoilerMessage) {
                   spoilerCollector(artMessage, cachedPost, true)
-                
-                }
-                else if(cachedPost.content===data.unspoilerCheck) {
-                  unspoilerCollector(artMessage, cachedPost, true);//run unspoilerCollector for reinitialization
-                }
-                
-                if(stillEdit)await cachedPost.edit({content: data.genericEndMessage});//edit post with unwatched message (this is the part that will be replaced)
-
-                untrackedPosts += 1; //count post as being acted on
+                  reinitializedPosts++;}
+                else if(cachedPost.content===data.unspoilerMessage) {
+                  unspoilerCollector(artMessage, cachedPost, true);
+                  reinitializedPosts++;}
+                else {
+                  await cachedPost.edit({content: data.genericEndMessage});
+                  droppedPosts++;//drop 1 so that the number doesn't increment in this case
+                }//if it got this far and somehow nothing matched, edit post with unwatch message
               }
             }
           }
@@ -105,8 +103,10 @@ client.on("ready", async () => {//when the bot first logs in
       }
       processed++;//count processed links after all ifs/awaits (tracks whether the loop is done)
       if(processed === cachedLinks.length)  {
-        //after processing it all, log the count and dump the file
-        console.log(`Restarted monitoring of ${untrackedPosts} ` + (untrackedPosts===1 ? "post" : "posts" + "!"));
+        //after processing it all, log count and dump file
+        console.log(`Restarted monitoring of ${reinitializedPosts} ` + (reinitializedPosts===1 ? "post" : "posts" + "!"));
+        //if any were simply dropped
+        if(droppedPosts>0) console.log(`Edited ${droppedPosts} untracked ` + (droppedPosts===1 ? "post" : "posts" + "!"));
         fs.writeFile(helpers.filename, "", (err)=>{if(err) console.log(err);})//log error if any
       }
     })
@@ -137,7 +137,7 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
           botResponse.react(helpers.checkEmoji);//bot reacts to its own message with all the emojis
 
           //initialize collector (the function will post, it doesn't need data return but does need client context)
-          artCollector(client, artMessage, botResponse, false);
+          artCollector(artMessage, botResponse, false);
         });
       }
     else pingMessage.reply(data.noImageMessage); //report if no images found in either ping message or reply
