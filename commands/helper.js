@@ -12,12 +12,12 @@ module.exports = {
 		const initialResponse = 'Hi! My job is to record your art!\n\n'+
 		"If you ping me in an image post or in a reply to an image post, I can add that image to my gallery.\n\n"+
 		"You can click the buttons to learn more about how I work.";
-		const editText = "If you use '/edit' and give me a link to one of your art posts in either of my galleries, I can fix it for you!\n\n"+
+		const editText = "If you use /edit and give me a link to one of your art posts in either of my galleries, I can fix it for you!\n\n"+
 			"I can only edit the art posts in my galleries, and only when /edit is used by the original artist credited in the gallery post.\n\n"+	
 			"Currently I can change or remove titles, descriptions, and spoiler tags.\n\n"+
 			"Note that remove and change are different - I have text inputs for updating info and True/False inputs for removing it.\n\n"+
 			"If the piece is posted in both galleries, I will fix both posts (I do this using the links!).";
-		const deleteText = "If you use '/delete' and give me a link to one of your art posts in one of my galleries, I can remove it for you!\n\n"+
+		const deleteText = "If you use /delete and give me a link to one of your art posts in one of my galleries, I can remove it for you!\n\n"+
 			`Currently this command removes crossposted art from both galleries. `+
 			`If you want to remove only Victoria's copy of a post, you can /delete both and have me repost.`;
 		const spoilerText = "Sometimes I need clarification about what people want me to do with spoilers, to make sure my gallery is as well organized as possible.\n\n"+
