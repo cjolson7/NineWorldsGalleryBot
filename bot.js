@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, Events, GatewayIntentBits, Partials } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const {data, helpers} = require('./data.js');
@@ -13,6 +13,10 @@ const client = new Client({//set up basic context with relevant action permissio
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMessageReactions
 	],
+  partials: [
+    Partials.Message, 
+    Partials.Channel, 
+    Partials.Reaction],
 });
 
 //set up commands on startup
