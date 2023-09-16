@@ -37,7 +37,7 @@ module.exports = {
 			"Feel free to react to my posts at any time. Even if I'm not answering now, I'll get it later!\n\n"+
 			"For arbitrary coding reasons, I have some trouble with emoji being removed after I come back online - you might occasionally have to take one off and re-add it.\n\n"+
 			"If I'm not responding to a reply or ping, you'll have to send that one again when I'm active. Those are harder to go back for."
-		const moreText = "You can click any of these to learn about how I work."
+		const moreText = "You can click any of these to learn more about how I work!"
 
 		//set up array of explanations and buttonids for easy iteration (done is a special case and does not need to be in here)
 		const buttonData = [[{id:'more', content: moreText}],
