@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-const {data} = require('../data.js');
+const {data, helpers} = require('../data.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -24,8 +24,8 @@ module.exports = {
 			"You don't need to spoiler Nine Worlds content in my galleries, but please do spoiler nsfw or potentially upsetting material.\n\n"+
 			"If you don't ask me to spoiler an image but it's spoilered in the original post, I'll offer to remove the spoiler. This won't change anything else about the image.\n\n"+
 			"If you do ask me to spoiler an image, I'll ask you to reply to me with a spoiler tag. Spoilers are more helpful when people have info about when they're safe to click!"
-		const timeoutText = "When I post a response to an artist, I watch the emojis on that post for 48 hours or until I get a ✅ from the artist.\n\n"+
-			"If I don't have a 🇾 from the artist after 48 hours, I don't post anything. If I *do* get a 🇾 but they never click ✅, I'll post the art when I finish waiting.\n\n"+
+		const timeoutText = `When I post a response to an artist, I watch the emojis on that post for 48 hours or until I get a ${helpers.checkEmoji} from the artist.\n\n`+
+			`If I don't have a ${helpers.yEmoji} from the artist after 48 hours, I don't post anything. If I *do* get a ${helpers.yEmoji} but they never click ${helpers.checkEmoji}, I'll post the art when I finish waiting.\n\n`+
 			"If I need clarification about spoiler tags or unspoilering, I'll wait for 12 hours after asking, then post as-is if they don't tell me anything more.\n\n"+
 			"The timer resets if I go down and come back, so sometimes I might watch a post for a little longer.\n\n"+
 			"I edit posts once I'm done watching them so that no one gets confused.";

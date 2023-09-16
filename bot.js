@@ -90,7 +90,7 @@ client.on("ready", async () => {//when the bot first logs in
                 else if(cachedPost.content===data.unspoilerCheck) {
                   console.log("untracked post is unspoiler message")
                   stillEdit = false;
-                  unspoilerCollector(artMessage.author.id, cachedPost, true)
+                  unspoilerCollector(artMessage, cachedPost, true)
                 }
                 
                 if(stillEdit)await cachedPost.edit({content: data.genericEndMessage});//edit post with unwatched message (this is the part that will be replaced)
