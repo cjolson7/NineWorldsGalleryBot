@@ -7,7 +7,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('edit')
-		.setDescription('Fix the title and/or description of one of your posted pieces.')
+		.setDescription('Fix the title and/or description of one of your posted pieces')
 		.addStringOption(option => option.setName('link')
 			.setDescription('Discord link to the posted art (required)')
 			.setMinLength(1)

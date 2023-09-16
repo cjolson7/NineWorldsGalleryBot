@@ -6,7 +6,7 @@ const galleryLinkErrors = require('../galleryLinkErrors.js').galleryLinkErrors;
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('delete')
-		.setDescription('Removes one of your posts from my gallery')
+		.setDescription('Removes one of your posts from my galleries')
 		.addStringOption(option => option.setName('link')
 			.setDescription('Discord link to the posted art (required)')
 			.setMinLength(1)
