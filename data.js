@@ -4,6 +4,11 @@ const fs = require('node:fs');
 const helpers = {
     yesEmoji:"👍",
     noEmoji:"👎",
+    yEmoji: "🇾",
+    nEmoji:"🇳",
+    spoilerEmoji:"🔒",
+    victoriaEmoji:"✍️",
+    checkEmoji:"✅",
     collectorTracker: (verb, collectors)=>{
         console.log(`Collector ${verb}. I am currently monitoring ${collectors} collectors.`);
         return collectors;
@@ -15,16 +20,16 @@ const helpers = {
             channel,
             message].join("/"); //discord links have a standard format
     },
-    filename: 'watchedPosts.txt'
+    filename: 'watchedPosts.txt',
 }
   
 const data = {
-    artResponseMessage: (artistId) => {return "Hi, <@" + artistId + ">! It looks like you posted some art! Please react with 🇾 if you want me to put it in my gallery. " +
+    artResponseMessage: (artistId) => {return "Hi, <@" + artistId + `>! It looks like you posted some art! Please react with ${helpers.yEmoji} if you want me to put it in my gallery. ` +
         "(You can edit it there later if you'd like.)\n\n" +
-        "You can use 🔒 to tell me to spoiler it when I post it. You don't have to spoiler Nine Worlds content in the galleries, but if there's something NSFW or potentially " +
+        `You can use ${helpers.spoilerEmoji} to tell me to spoiler it when I post it. You don't have to spoiler Nine Worlds content in the galleries, but if there's something NSFW or potentially ` +
         "upsetting, please do use a spoiler and tag the reason. (I ask for spoiler tags before posting, and you can /edit them in later if needed!)"+
-        "If you add ✍️, I\'ll share it with Victoria as well.\n\n" +
-    	"When you're done reacting, or if you don't want me to post, please click ✅ to tell me to move on."},
+        `If you add ${helpers.victoriaEmoji}, I\'ll share it with Victoria as well.\n\n`+
+    	`When you're done reacting, or if you don't want me to post, please click ${helpers.checkEmoji} to tell me to move on.`},
     noMessage: "Okay, I won't post this image to the gallery. Thanks for telling me!",
     noImageMessage: "Sorry, I don't see any images there for me to record.",
     yesMessage: (spoiler, links)=>{ //posting message is dependent on the spoiler toggle and post links
@@ -39,9 +44,10 @@ const data = {
         `Please tell me ${helpers.yesEmoji} or ${helpers.noEmoji}`,
     spoilerMessage: "Do you want to add a spoiler tag to the gallery post? You can reply to this post with the spoiler tag.\n\n"+
         "If you use 🇳 (or ignore me long enough), I'll move on without a tag.",
-    spoilerField:"Spoiler Tag",//don't change this one, field names should be stable!
     timeout: "I've timed out, so I won't take responses here. Call me again if you need me!",
     genericEndMessage: "I am no longer watching this message. Please call me again if you need me!",
+    spoilerField:"Spoiler Tag",//don't change this one, field names should be stable!
+    manualEndReason:"manualPost",
     day: 24*helpers.hour,//24 hours
     ephemeralTimeout: helpers.hour/2, //half an hour
     linkRegex: /^https:\/\/discord.com\/channels\/[0-9]{17,19}\/[0-9]{17,19}\/[0-9]{17,19}\/?$/,

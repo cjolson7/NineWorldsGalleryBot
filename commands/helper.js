@@ -26,12 +26,13 @@ module.exports = {
 			"If you do ask me to spoiler an image, I'll ask you to reply to me with a spoiler tag. Spoilers are more helpful when people have info about when they're safe to click!"
 		const timeoutText = "When I post a response to an artist, I watch the emojis on that post for 48 hours or until I get a ✅ from the artist.\n\n"+
 			"If I don't have a 🇾 from the artist after 48 hours, I don't post anything. If I *do* get a 🇾 but they never click ✅, I'll post the art when I finish waiting.\n\n"+
-			"If I need clarification about spoiler tags or unspoilering, I'll wait for 12 hours after asking, then post as-is if they don't tell me anything more.\n\n" +
+			"If I need clarification about spoiler tags or unspoilering, I'll wait for 12 hours after asking, then post as-is if they don't tell me anything more.\n\n"+
+			"The timer resets if I go down and come back, so sometimes I might watch a post for a little longer.\n\n"+
 			"I edit posts once I'm done watching them so that no one gets confused.";
 		const userText = "I check discord user ids when I respond to art, and when I make gallery posts.\n\n"+
 			"Only the original poster of an image can consent for me to post it or ask me to edit or delete it.\n\n"+
 			"(The mods can always delete things, of course.) If someone else replies to or reacts to me when I'm waiting on the artist, I'll just ignore them.";
-		const offlineText = "For obvious reasons, I can't detect emojis, pings, or replies when I'm offline for maintenance.\n\n"+
+		const offlineText = "For obvious reasons, I can't detect emojis, pings, or replies while I'm offline for maintenance.\n\n"+
 			"However, I keep track of the posts I'm currently listening to whenever I go down, and I check the emojis when I come back online.\n\n"+
 			"Feel free to react to my posts at any time. Even if I'm not answering now, I'll get it later!\n\n"+
 			"If I'm not responding to a reply or ping, you'll have to send that one again when I'm active. Those are harder to go back for."

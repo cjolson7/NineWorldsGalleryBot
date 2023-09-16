@@ -5,13 +5,20 @@ const postImage = require('./postImage.js').postImage;
 const mainTimeout = data.day*2;//timeouts for collectors - 48 hours for initial ping, 12 hours for clarification
 const clarificationTimeout = data.day/2
 var collectors; //global variable tracking current number of collectors
+var allPostingChannels;//global variable tracking the posting channels
 
-const startCountingCollectors = ()=>{collectors = 0};//start collector value at 0
+const startUp = ()=>{
+    collectors = 0;//start collector value at 0
+
+    //set up posting channels
+    const galleryChannel = client.channels.cache.get(process.env.GALLERYCHANNELID); //get gallery channel
+    const victoriaChannel = client.channels.cache.get(process.env.VICTORIACHANNELID); 
+    allPostingChannels = [galleryChannel, victoriaChannel];//get both (narrow to just gallery later based on user selection)
+}
 
 const artCollector = async (client, artMessage, botResponse, reinitialize) => {
     //takes in the art post, the bot's response message, collector tracker, and whether this is a new collector or a reinitialization
     //whole art post is needed, its contents are relevant for posting and unspoilering
-    var finished = false;//stopper variable for full collection waiting
 
     var yesDetected=false; //set up emoji tracker variables
     var spoilerDetected=false;
@@ -23,28 +30,28 @@ const artCollector = async (client, artMessage, botResponse, reinitialize) => {
     }
 
     const collectorFilter = (reaction, user) => {//filter for specific emoji and original poster
-        return (reaction.emoji.name === '🇾' || reaction.emoji.name === '🔒' || reaction.emoji.name === '✍️' || reaction.emoji.name === '✅') &&
-            user.id === artMessage.author.id;
+        return (reaction.emoji.name === helpers.yEmoji || reaction.emoji.name === helpers.spoilerEmoji || reaction.emoji.name === helpers.victoriaEmoji || 
+            reaction.emoji.name === helpers.checkEmoji) &&user.id === artMessage.author.id;
       };
       const collector = botResponse.createReactionCollector({ filter: collectorFilter, time: mainTimeout, dispose: true}); //watch the message for the right emoji
       collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, true);//increment active collectors and report (do add to file)
 
       //end on detecting ✅, record detecting the others
       collector.on('collect', async (reaction, user) => {
-        if (!yesDetected && reaction.emoji.name === '🇾') yesDetected=true; //use detector vars to know when they're clicked
-        if (!spoilerDetected && reaction.emoji.name === '🔒') spoilerDetected=true;
-        if (!victoriaDetected && reaction.emoji.name === '✍️') victoriaDetected=true;
+        if (!yesDetected && reaction.emoji.name === helpers.yEmoji) yesDetected=true; //use detector vars to know when they're clicked
+        if (!spoilerDetected && reaction.emoji.name === helpers.spoilerEmoji) spoilerDetected=true;
+        if (!victoriaDetected && reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected=true;
         
-        if (!doneDetected && reaction.emoji.name === '✅') {
+        if (!doneDetected && reaction.emoji.name === helpers.checkEmoji) {
           doneDetected=true; //this one only reacts the first time and doesn't care if it's removed
           collector.stop();//turn off the collector after it receives this emoji
         }
       });
 
       collector.on('remove', (reaction) => {
-        if (yesDetected && reaction.emoji.name === '🇾') yesDetected=false; //toggle detector vars on remove
-        if (spoilerDetected && reaction.emoji.name === '🔒') spoilerDetected=false;
-        if (victoriaDetected && reaction.emoji.name === '✍️') victoriaDetected=false;
+        if (yesDetected && reaction.emoji.name === helpers.yEmoji) yesDetected=false; //toggle detector vars on remove
+        if (spoilerDetected && reaction.emoji.name === helpers.spoilerEmoji) spoilerDetected=false;
+        if (victoriaDetected && reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected=false;
       });
       
       collector.on('end', async (collected, reason) => {//edit instruction message on collector stop
@@ -68,7 +75,7 @@ const artCollector = async (client, artMessage, botResponse, reinitialize) => {
         if(reason === 'time' && !yesDetected){replaceMessage = data.timeout}//indicate timeout stop if no 🇾 response
         else if(reason === 'user' || (reason === 'time' && yesDetected)){//when a user stops the collector, or it times out with yes, post the image and edit the message
           
-          var confirmationMessage = data.noMessage; //default response is no 
+        //   var confirmationMessage = data.noMessage; //default response is no 
           var spoilerTag; //needs to exist as blank even when not updated
 
           if(unspoiler){//unspoiler clarification check follows from earlier logic check
@@ -79,7 +86,7 @@ const artCollector = async (client, artMessage, botResponse, reinitialize) => {
             botResponse.react(helpers.noEmoji); 
 
             //run response collector, return unspoiler and collector tracking (false for initialization)
-            unspoiler = await unspoilerCollector(artMessage.author.id, botResponse, false);
+            unspoiler = await unspoilerCollector(artMessage, botResponse, false);
             //unspoiler is reused safely because it gets a new default in the collector function
           }
           else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
@@ -87,66 +94,114 @@ const artCollector = async (client, artMessage, botResponse, reinitialize) => {
             botResponse.react('🇳'); //add reaction
 
             //run response collector, return unspoiler and collector tracking (false for initialization)
-            spoilerTag = await spoilerCollector(artMessage.author.id, botResponse, false);
+            spoilerTag = await spoilerCollector(artMessage, botResponse, false);
+            }
+        
+            //feed all collected data into finish and post function!
+            finishAndPost(reason, artMessage, botResponse, yesDetected, spoilerDetected, victoriaDetected, unspoiler, spoilerTag);//make the post!
         }
 
-        //if yes, make the posts!
-        if(yesDetected){
-          const galleryChannel = client.channels.cache.get(process.env.GALLERYCHANNELID); //get gallery channel
-          var postingChannels = [galleryChannel];//gallery is the default
-          if(victoriaDetected) {//if crossposting, get other channel from id and add it to the list
-            const victoriaChannel = client.channels.cache.get(process.env.VICTORIACHANNELID); 
-            postingChannels.push(victoriaChannel);
-          }
-          confirmationMessage = await postImage(artMessage, postingChannels, spoilerDetected, spoilerTag, unspoiler); //post to channels and return links to posts!
-        }
-        replaceMessage = confirmationMessage//prepare to edit in the message
-      }
-      else{replaceMessage = data.genericEndMessage}//any other collector end reason gets a default response
-
-      await botResponse.edit({content: replaceMessage, embeds: []});//edit in final message status
-      finished = true;//set callback variable to allow return to progress
     });
 }
 
-const unspoilerCollector = async (artistId, botResponse, reinitialize)=>{
+const finishAndPost = async(reason, artMessage, botResponse, yesDetected, spoilerDetected, victoriaDetected, unspoiler, spoilerTag)=>{
+    //takes in an end reason (either custom or from collector ending) and the data needed to post
+
+    if(reason === 'user' || (reason === 'time' && yesDetected) || reason === data.manualEndReason){
+        //when a user stops the collector, or it times out with yes, or this function was triggered elsewhere, post the image and edit the message
+        
+        var confirmationMessage = data.noMessage; //default response is no 
+
+        //if yes, make the posts!
+        if(yesDetected){
+            var postingChannels = allPostingChannels;//get all the posting channels (in format [gallery, victoria])
+            if(!victoriaDetected) {//if not crossposting, limit to just the gallery channel
+                postingChannels = allPostingChannels[0];
+            }
+            confirmationMessage = await postImage(artMessage, postingChannels, spoilerDetected, spoilerTag, unspoiler); //post to channels and return links to posts!
+          }
+          replaceMessage = confirmationMessage//prepare to edit in the message
+        }
+        else{replaceMessage = data.genericEndMessage}//any other collector end reason gets a default response
+  
+        botResponse.edit({content: replaceMessage, embeds: []});//edit in final message status
+
+}
+
+const unspoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     //takes in the art post's author, the bot's response message, collector tracker, and whether this is a new collector or a reinitialization
 
     var finished = false;//stopper variable for secondary collector waiting
     var unspoiler = false; //default is *not* to unspoiler
 
-    //tracking variables for existing emoji
+    //tracking variables for reinitialization case
     var unspoilerYes= false;
     var unspoilerNo = false;
+    var yesDetected=false; //emoji tracker variables for reinitialization case, default false
+    var spoilerDetected=false;
+    var victoriaDetected=false;
+    var collectorNeeded = true; //whether to run the collector at all - defaults true
 
     if(reinitialize){//check emoji on reinitialize - collector may not be needed
-        botResponse.reactions.cache.forEach(async(reaction)=>{//iterate through existing reactions
-            if(reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji)//only care about the emoji for this case
-            console.log(reaction._emoji.name + ": " + reaction.count);
+        botResponse.reactions.cache.forEach(async(reaction)=>{//iterate through existing reactions - listen for the original three and the two specific to this case
+            if(reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji || reaction.emoji.name === helpers.yEmoji || 
+                reaction.emoji.name === helpers.spoilerEmoji || reaction.emoji.name === helpers.victoriaEmoji){
+                const reactors = await reaction.users.fetch();//get the people who reacted
+                reactors.forEach(async (id)=>{//for each person who used each emoji
+                    if(id==artMessage.author.id){//only care about emoji from the artist
+                        if(reaction.emoji.name === helpers.yesEmoji) unspoilerYes = true//save emoji values
+                        else if (reaction.emoji.name === helpers.noEmoji) unspoilerNo = true    
+                        else if (reaction.emoji.name === helpers.spoilerEmoji) spoilerDetected = true    
+                        else if (reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected = true    
+                        else if (reaction.emoji.name === helpers.yEmoji) yesDetected = true    
+                    }
+                })
+            }
         })
-        // botResponse.reactions.cache.get(r => r.emoji.name == MyEmoji).count
-    }else{//temporary else block for emoji check
+        //if there is only yes or only no, unspoiler can end here and return the answer
+        if (unspoilerYes != unspoilerNo){//if they aren't the same, one is true and the other false
+            unspoiler = unspoilerYes;//unspoiler = unspoilerYes (false if no is true, as it should be)
+            collectorNeeded = false;
+        }
+        //the other cases are none or both (track remove) - either way run collector as normal but post at the end
+    }
 
-    collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file for clarification collector)
+    if(collectorNeeded){//don't collect unless needed
+        collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file for clarification collector)
 
-    const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji) && user.id === artistId)};//filter for emojis by original poster
-    const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: clarificationTimeout, dispose: true}); //bot watches for a reaction
+        const unspoilerFilter = (reaction, user) => {return ((reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji) && user.id === artMessage.author.id)};//filter for emojis by original poster
+        const unspoilerCollector = botResponse.createReactionCollector({ filter: unspoilerFilter, time: clarificationTimeout, dispose: true}); //bot watches for a reaction
 
-    unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
-        if(reaction.emoji.name === helpers.yesEmoji) unspoiler = true;
-        unspoilerCollector.stop();
-        finished = true; //callback flag for bot to move on
-    });
-                
-    unspoilerCollector.on('end', async ()=>{collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);});//decrement active collectors and report (edit file, no longer tracking post)                 
-                
-    await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and close
+        unspoilerCollector.on('collect', (reaction) => {//on any collection, detect which then stop and move on - only need one result
+            if(reaction.emoji.name === helpers.yesEmoji) unspoiler = true;
+            unspoilerCollector.stop();
+            finished = true; //callback flag for bot to move on
+        });
+
+        unspoilerCollector.on('collect', (reaction) => {//on removal, if both were already selected, detect which then stop and move on
+            if(unspoilerYes && unspoilerNo){//if both
+                if(reaction.emoji.name === helpers.yesEmoji) unspoiler = false;
+                if(reaction.emoji.name === helpers.noEmoji) unspoiler = true;//opposite responses since these are removals
+                unspoilerCollector.stop();
+                finished = true; //callback flag for bot to move on
+            }
+        });
+                    
+        unspoilerCollector.on('end', async ()=>{collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);});//decrement active collectors and report (edit file, no longer tracking post)                 
+                    
+        await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collector has gotten an answer and close
+    }
+    if(reinitialize){
+        //if it's a reinitialization, run finish and post here
+        var reason = data.manualEndReason;
+        var spoilerTag;//should be undefined
+        finishAndPost(reason, artMessage, botResponse, yesDetected, spoilerDetected, victoriaDetected, unspoiler, spoilerTag);
+    }
 
     return unspoiler;//return unspoiler status
 }
-}
 
-const spoilerCollector = async (artistId, botResponse, reinitialize)=>{
+const spoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     //takes in the art post's author, the bot's response message, collector tracker, and whether this is a new collector or a reinitialization
 
     var finished = false;//stopper variable for secondary collector waiting
@@ -155,8 +210,8 @@ const spoilerCollector = async (artistId, botResponse, reinitialize)=>{
         console.log("checking existing emoji")
     }
 
-    const noFilter = (reaction, user) => {return (reaction.emoji.name === '🇳' && user.id === artistId)};//filter for 🇳 emoji by original poster
-    const replyFilter = (reply) => {return (artistId === reply.author.id && reply.reference && reply.reference.messageId === botResponse.id)};//filter for a reply from the poster to the bot
+    const noFilter = (reaction, user) => {return (reaction.emoji.name === '🇳' && user.id === artMessage.author.id)};//filter for 🇳 emoji by original poster
+    const replyFilter = (reply) => {return (artMessage.author.id === reply.author.id && reply.reference && reply.reference.messageId === botResponse.id)};//filter for a reply from the poster to the bot
     const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: clarificationTimeout, dispose: true, max: 1})//message collector watches for just the first applicable reply
     const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: clarificationTimeout, dispose: true}); //reaction collector watches for a 🇳
     collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file for clarification collector)
@@ -181,4 +236,4 @@ const spoilerCollector = async (artistId, botResponse, reinitialize)=>{
     return spoilerTag;//return spoiler tag for use in posting
 }
 
-module.exports = {artCollector, unspoilerCollector, spoilerCollector, startCountingCollectors};
+module.exports = {artCollector, unspoilerCollector, spoilerCollector, startUp};

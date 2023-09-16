@@ -3,7 +3,7 @@ const { Client, Collection, Events, GatewayIntentBits} = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const {data, helpers} = require('./data.js');
-const {artCollector, startCountingCollectors, unspoilerCollector} = require('./collectors.js');
+const {artCollector, startUp, unspoilerCollector} = require('./collectors.js');
 //const postImage = require('./postImage.js').postImage;
 
 const client = new Client({//set up basic context with relevant action permissions
@@ -31,7 +31,6 @@ for (const file of commandFiles) {//initialize each command
 	}
 }
 
-startCountingCollectors();//set collector counter on bot start
 client.login(process.env.TOKEN);//start bot
 
 client.on(Events.InteractionCreate, async interaction => {//execute slash commands
@@ -58,6 +57,7 @@ client.on(Events.InteractionCreate, async interaction => {//execute slash comman
 
 client.on("ready", () => {//when the bot first logs in
   console.log(`Logged in as ${client.user.tag}!`)
+  startUp(client);//set collector counter and prep gallery channel reference on bot start
 
   //connect to message list file on startup and turn it into a list of discord links
   var untrackedPosts = 0;
@@ -129,10 +129,10 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
     if (artMessage.attachments.size > 0 && artMessage.author.id!=process.env.BOTID) {
 
       artMessage.reply(data.artResponseMessage(artMessage.author.id)).then(async (botResponse) => {//send the message, including user reference
-          botResponse.react('🇾');
-          botResponse.react('🔒');
-          botResponse.react('✍️');
-          botResponse.react('✅');//bot reacts to its own message with all the emojis
+          botResponse.react(helpers.yEmoji);
+          botResponse.react(helpers.spoilerEmoji);
+          botResponse.react(helpers.victoriaEmoji);
+          botResponse.react(helpers.checkEmoji);//bot reacts to its own message with all the emojis
 
           //initialize collector (the function will post, it doesn't need data return but does need client context)
           artCollector(client, artMessage, botResponse, false);
