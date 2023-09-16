@@ -11,8 +11,7 @@ module.exports = {
 		//command and explanation text
 		const initialResponse = 'Hi! My job is to record your art!\n\n'+
 		"If you ping me in an image post or in a reply to an image post, I can add that image to my gallery.\n\n"+
-		"You can click the buttons to learn more about how I work, or click Done.";
-		const doneText = "Alright! Call me if you need me!";
+		"You can click the buttons to learn more about how I work.";
 		const editText = "If you call '/edit' and give me a link to one of your art posts in either of my galleries, I can fix it for you!\n\n"+
 			"I can only edit the art posts in my galleries, and only when /edit is called by the original artist credited in the gallery post.\n\n"+	
 			"Currently I can change or remove titles, descriptions, and spoiler tags.\n\n"+
@@ -28,27 +27,26 @@ module.exports = {
 		const timeoutText = "When I post a response to an artist, I watch the emojis on that post for 48 hours or until I get a ✅ from the artist.\n\n"+
 			"If I don't have a 🇾 from the artist after 48 hours, I don't post anything. If I *do* get a 🇾 but they never click ✅, I'll post the art when I finish waiting.\n\n"+
 			"If I need clarification about spoiler tags or unspoilering, I'll wait for 12 hours after asking, then post as-is if they don't tell me anything more.\n\n" +
-			"I edit posts once I'm done watching them so that no one gets confused.\n\n"+
-			"I lose track of the posts I'm watching if I go down for maintenance, but I edit them all to say so when I come back online!";
+			"I edit posts once I'm done watching them so that no one gets confused.";
 		const userText = "I check discord user ids when I respond to art, and when I make gallery posts.\n\n"+
 			"Only the original poster of an image can consent for me to post it or ask me to edit or delete it.\n\n"+
 			"(The mods can always delete things, of course.) If someone else replies to or reacts to me when I'm waiting on the artist, I'll just ignore them.";
-		const moreText = "You can click any of these to learn about how I work, or click done!"
+		const offlineText = "For obvious reasons, I can't detect emojis, pings, or replies when I'm offline for maintenance.\n\n"+
+			"However, I keep track of the posts I'm currently listening to whenever I go down, and I check the emojis when I come back online.\n\n"+
+			"Feel free to react to my posts at any time. Even if I'm not answering now, I'll get it later!\n\n"+
+			"If I'm not responding to a reply or ping, you'll have to send that one again when I'm active. Those are harder to go back for."
+		const moreText = "You can click any of these to learn about how I work."
 
 		//set up array of explanations and buttonids for easy iteration (done is a special case and does not need to be in here)
-		const buttonData = [[{id:'done', content: doneText}, {id:'more', content: moreText}],
+		const buttonData = [[{id:'more', content: moreText}],
 			[{id:'edit', content: editText}, {id:'delete', content: deleteText}, {id:'spoiler', content: spoilerText}],
-			[{id:'timeout', content: timeoutText}, {id:'userid', content: userText}]];
-		//only 5 buttons allowed in a row, and two of them are "more" and "done" - separate into sets of three
+			[{id:'timeout', content: timeoutText}, {id:'userid', content: userText}, {id:'offline', content: offlineText}]];
+		//only 5 buttons allowed in a row, and one is "more"
+		//two sets of three is even right now, could get up to 4 in a row before adding another
 
 		//set up buttons - labels are arbitrary/visual, but ids are referenced again later
-		const doneButton = new ButtonBuilder()
-			.setCustomId(buttonData[0][0].id)
-			.setLabel('Done')
-			.setStyle(ButtonStyle.Primary);
-
 		const moreButton = new ButtonBuilder()
-			.setCustomId(buttonData[0][1].id)
+			.setCustomId(buttonData[0][0].id)
 			.setLabel('More Buttons')
 			.setStyle(ButtonStyle.Primary);
 
@@ -77,11 +75,16 @@ module.exports = {
 			.setLabel('user ids')
 			.setStyle(ButtonStyle.Secondary);
 
+		const offlineButton = new ButtonBuilder()
+		.setCustomId(buttonData[2][2].id)
+		.setLabel("offline")
+		.setStyle(ButtonStyle.Secondary);
+
 
 		const buttonRow1 = new ActionRowBuilder()
-			.addComponents(doneButton, moreButton, editButton, deleteButton, spoilerButton, );
+			.addComponents(moreButton, editButton, deleteButton, spoilerButton);
 		const buttonRow2 = new ActionRowBuilder()
-			.addComponents(doneButton, moreButton, timeoutButton, userButton);
+			.addComponents(moreButton, timeoutButton, userButton, offlineButton);
 		const buttonRows = [buttonRow1, buttonRow2]; //list makes them iterable with currentRow-1 as index
 		var currentRow = 1; //start on row 1, switch on more
 
@@ -90,13 +93,10 @@ module.exports = {
 			components: [buttonRow1],
 			ephemeral: true
 		}).then((sent)=>{
-			const buttonCollector = sent.createMessageComponentCollector({ time: data.ephemeralTimeout*2 });//60 min timeout
+			const buttonCollector = sent.createMessageComponentCollector({ time: data.ephemeralTimeout });//30 min timeout
 			buttonCollector.on('collect', async buttonInteraction => {
 	
-				if (buttonInteraction.customId === buttonData[0][0].id) {//done
-					await buttonInteraction.update({ content: doneText, components: [] })//remove buttons and update with comfirm text
-					return //end
-				}else if (buttonInteraction.customId === buttonData[0][1].id) {//more
+				if (buttonInteraction.customId === buttonData[0][0].id) {//more
 					currentRow++;//add 1 to current row
 					if(currentRow>2) currentRow = 1;//if current row >2, reset to 1 (overflow allows more rows if needed)
 					await buttonInteraction.update({ content: moreText, components: [buttonRows[currentRow-1]] })//change to other row of buttons

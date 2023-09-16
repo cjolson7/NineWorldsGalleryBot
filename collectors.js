@@ -115,8 +115,16 @@ const unspoilerCollector = async (artistId, botResponse, reinitialize)=>{
     var finished = false;//stopper variable for secondary collector waiting
     var unspoiler = false; //default is *not* to unspoiler
 
+    //tracking variables for existing emoji
+    var unspoilerYes= false;
+    var unspoilerNo = false;
+
     if(reinitialize){//check emoji on reinitialize - collector may not be needed
-        console.log("checking existing emoji")
+        botResponse.reactions.cache.forEach(async(reaction)=>{//iterate through existing reactions
+            if(reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji)//only care about the emoji for this case
+            console.log(reaction._emoji.name + ": " + reaction.count);
+        })
+        // botResponse.reactions.cache.get(r => r.emoji.name == MyEmoji).count
     }else{//temporary else block for emoji check
 
     collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, false);//increment active collectors and report (don't add to file for clarification collector)
