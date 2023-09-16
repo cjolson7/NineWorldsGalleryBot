@@ -3,7 +3,7 @@ const { Client, Collection, Events, GatewayIntentBits} = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const {data, helpers} = require('./data.js');
-const {artCollector, startUp, unspoilerCollector} = require('./collectors.js');
+const {artCollector, startUp, unspoilerCollector, spoilerCollector} = require('./collectors.js');
 //const postImage = require('./postImage.js').postImage;
 
 const client = new Client({//set up basic context with relevant action permissions
@@ -80,15 +80,18 @@ client.on("ready", async () => {//when the bot first logs in
               try{artMessage = await cachedChannel.messages.fetch(repliedTo.messageId);}catch{return}//get referenced message or skip
               if (artMessage.attachments.size > 0 && artMessage.author.id!=process.env.BOTID){//check that the reference message has art and is not by the bot
                 
-                var stillEdit = true;//TEMP
+                var stillEdit = false;//TEMP
 
                 //use the content of the bot's post to determine its status
-                if(cachedPost.content===data.artResponseMessage(artMessage.author.id)) {console.log("untracked post is main message")
+                if(cachedPost.content===data.artResponseMessage(artMessage.author.id)) {
+                  console.log("untracked post is main message")
+                  stillEdit = true;
                 }
-                else if(cachedPost.content===data.spoilerMessage) {console.log("untracked post is spoiler message")
+                else if(cachedPost.content===data.spoilerMessage) {
+                  spoilerCollector(artMessage, cachedPost, true)
+                
                 }
                 else if(cachedPost.content===data.unspoilerCheck) {
-                  stillEdit = false;
                   unspoilerCollector(artMessage, cachedPost, true);//run unspoilerCollector for reinitialization
                 }
                 

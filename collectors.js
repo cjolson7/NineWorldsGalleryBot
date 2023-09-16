@@ -226,7 +226,6 @@ const spoilerCollector = async (artMessage, botResponse, reinitialize)=>{
                 const reactors = await reaction.users.fetch();//get the people who reacted
                 reactors.forEach(async (id)=>{//for each person who used each emoji
                     if(id==artMessage.author.id){//only care about emoji from the artist
-                        console.log(reaction.emoji.name)
                         if (reaction.emoji.name === helpers.nEmoji) noSpoilerTag = true     
                         else if (reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected = true    
                     }
@@ -245,31 +244,32 @@ const spoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     }
     if(reinitialize) await data.waitFor(_ => reinitialized === true);//if reinitializing, wait for the reaction loop to complete 
 
-    const noFilter = (reaction, user) => {return (reaction.emoji.name ===  helpers.nEmoji && user.id === artMessage.author.id)};//filter for 🇳 emoji by original poster
-    const replyFilter = (reply) => {return (artMessage.author.id === reply.author.id && reply.reference && reply.reference.messageId === botResponse.id)};//filter for a reply from the poster to the bot
-    const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: clarificationTimeout, max: 1})//message collector watches for just the first applicable reply
-    const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: clarificationTimeout}); //reaction collector watches for a 🇳
-    collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, reinitialize);//increment active collectors and report 
-    //don't add to file unless this is a reinitialization
+    if(collectorNeeded){//don't run the collector if it's not necessary
+        const noFilter = (reaction, user) => {return (reaction.emoji.name ===  helpers.nEmoji && user.id === artMessage.author.id)};//filter for 🇳 emoji by original poster
+        const replyFilter = (reply) => {return (artMessage.author.id === reply.author.id && reply.reference && reply.reference.messageId === botResponse.id)};//filter for a reply from the poster to the bot
+        const replyCollector = botResponse.channel.createMessageCollector({filter: replyFilter, time: clarificationTimeout, max: 1})//message collector watches for just the first applicable reply
+        const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: clarificationTimeout}); //reaction collector watches for a 🇳
+        collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, reinitialize);//increment active collectors and report 
+        //don't add to file unless this is a reinitialization
 
-    var spoilerTag;//create blank, collect if supplied
+        var spoilerTag;//create blank, collect if supplied
 
-    noCollector.on('collect', () => {
-        noCollector.stop();//stop and move on if the reaction filter collects anything (since it's already filtered down to the one emoji)
-        replyCollector.stop();
-    }) //stop reply collector, too
+        noCollector.on('collect', () => {
+            noCollector.stop();//stop and move on if the reaction filter collects anything (since it's already filtered down to the one emoji)
+            replyCollector.stop();
+        }) //stop reply collector, too
 
-    replyCollector.on('collect', async (replyMessage) => {//collect reply message if one is detected
-        spoilerTag = await replyMessage.content;
-    })
-    await replyCollector.on('end', async ()=>{
-        noCollector.stop() //make sure both collectors stop  
-        collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);//decrement active collectors and report (edit file, no longer tracking post)
-        finished = true;//when it stops waiting for replies it is done
-    })
+        replyCollector.on('collect', async (replyMessage) => {//collect reply message if one is detected
+            spoilerTag = await replyMessage.content;
+        })
+        await replyCollector.on('end', async ()=>{
+            noCollector.stop() //make sure both collectors stop  
+            collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);//decrement active collectors and report (edit file, no longer tracking post)
+            finished = true;//when it stops waiting for replies it is done
+        })
 
-    await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collectors have gotten their answers and closed
-
+        await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collectors have gotten their answers and closed
+    }
     if(reinitialize){
         //if it's a reinitialization, run finish and post here
         //yes and spoiler true, unspoiler false due to having gotten this far, remaining variable is Victoria
