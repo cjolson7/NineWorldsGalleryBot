@@ -142,14 +142,12 @@ const unspoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     var collectorNeeded = true; //whether to run the collector at all - defaults true
 
     if(reinitialize){//check emoji on reinitialize - collector may not be needed
-        console.log("reinitializing")
         var processed = 0; //counter for loop
         botResponse.reactions.cache.forEach(async(reaction)=>{//iterate through existing reactions - listen for victoria and the two specific to this case
             if(reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji || reaction.emoji.name === helpers.victoriaEmoji ){
                 const reactors = await reaction.users.fetch();//get the people who reacted
                 reactors.forEach(async (id)=>{//for each person who used each emoji
                     if(id==artMessage.author.id){//only care about emoji from the artist
-                        console.log(reaction.emoji.name)
                         if(reaction.emoji.name === helpers.yesEmoji) unspoilerYes = true//save emoji values
                         else if (reaction.emoji.name === helpers.noEmoji) unspoilerNo = true     
                         else if (reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected = true    
@@ -213,10 +211,39 @@ const spoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     //takes in the art post's author, the bot's response message, collector tracker, and whether this is a new collector or a reinitialization
 
     var finished = false;//stopper variable for secondary collector waiting
+    var reinitialized = false;//stopper variable for reinitialization loop
+
+    //tracking variables for reinitialization case
+    var noSpoilerTag= false;
+    var victoriaDetected=false;//default false
+    var collectorNeeded = true; //whether to run the collector at all - defaults true
 
     if(reinitialize){//check emoji on reinitialize - collector may not be needed
-        console.log("checking existing emoji")
+        console.log("reinitializing")
+        var processed = 0; //counter for loop
+        botResponse.reactions.cache.forEach(async(reaction)=>{//iterate through existing reactions - listen for victoria and the specific 🇳 reaction
+            if(reaction.emoji.name === helpers.nEmoji || reaction.emoji.name === helpers.victoriaEmoji ){
+                const reactors = await reaction.users.fetch();//get the people who reacted
+                reactors.forEach(async (id)=>{//for each person who used each emoji
+                    if(id==artMessage.author.id){//only care about emoji from the artist
+                        console.log(reaction.emoji.name)
+                        if (reaction.emoji.name === helpers.nEmoji) noSpoilerTag = true     
+                        else if (reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected = true    
+                    }
+                })
+            }
+            //if there is only yes or only no after checking all emoji, unspoiler can end here and just post
+            processed++;//count processed emoji at end of each loop(tracks whether the forEach is done)
+            if(processed === botResponse.reactions.cache.size)  {
+                if (noSpoilerTag){//if they already clicked no, don't run the collector
+                    console.log("Skipping collector. Sufficient data detected on reinitialization.")
+                    collectorNeeded = false;
+                };
+                reinitialized = true;
+            }//otherwise run collector and wait for either 🇳 or Reply
+        })
     }
+    if(reinitialize) await data.waitFor(_ => reinitialized === true);//if reinitializing, wait for the reaction loop to complete 
 
     const noFilter = (reaction, user) => {return (reaction.emoji.name ===  helpers.nEmoji && user.id === artMessage.author.id)};//filter for 🇳 emoji by original poster
     const replyFilter = (reply) => {return (artMessage.author.id === reply.author.id && reply.reference && reply.reference.messageId === botResponse.id)};//filter for a reply from the poster to the bot
@@ -224,7 +251,8 @@ const spoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     const noCollector = botResponse.createReactionCollector({ filter: noFilter, time: clarificationTimeout}); //reaction collector watches for a 🇳
     collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, reinitialize);//increment active collectors and report 
     //don't add to file unless this is a reinitialization
-    var spoilerTag;
+
+    var spoilerTag;//create blank, collect if supplied
 
     noCollector.on('collect', () => {
         noCollector.stop();//stop and move on if the reaction filter collects anything (since it's already filtered down to the one emoji)
@@ -241,6 +269,12 @@ const spoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     })
 
     await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collectors have gotten their answers and closed
+
+    if(reinitialize){
+        //if it's a reinitialization, run finish and post here
+        //yes and spoiler true, unspoiler false due to having gotten this far, remaining variable is Victoria
+        finishAndPost(data.manualEndReason, artMessage, botResponse, true, true, victoriaDetected, false, spoilerTag);
+    }
 
     return spoilerTag;//return spoiler tag for use in posting
 }
