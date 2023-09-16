@@ -38,6 +38,7 @@ module.exports = {
 			"For arbitrary coding reasons, I have some trouble with emoji being removed after I come back online - you might occasionally have to take one off and re-add it.\n\n"+
 			"If I don't respond to a reply or ping, you'll have to send that one again when I'm online. Those are harder to go back for."
 		const moreText = "You can click any of these to learn more about how I work!"
+		const timeoutMessage = "This command has timed out. Please use /helper again if you would like to see more!"
 
 		//set up array of explanations and buttonids for easy iteration (done is a special case and does not need to be in here)
 		const buttonData = [[{id:'more', content: moreText}],
@@ -105,14 +106,16 @@ module.exports = {
 				}
 				else {
 					buttonData[currentRow].forEach(async (button)=>{//if it isn't more or done, iterate through buttons on the current row
-							if (buttonInteraction.customId === button.id) {//check each id, act on the matching one
-								await buttonInteraction.update({ content: button.content })//update text, no need to return or change buttons
-							}
-						})
-					}
-				});
-				
+						if (buttonInteraction.customId === button.id) {//check each id, act on the matching one
+							await buttonInteraction.update({ content: button.content })//update text, no need to return or change buttons
+						};
+					});
+				};
 			});
-	
-		}
-	};
+
+			buttonCollector.on('end', async ()=>{//detect timeout and remove buttons
+				if(reason === 'time') await buttonInteraction.update({content: timeoutMessage, components:[]})
+			});	
+		});
+	}
+};
