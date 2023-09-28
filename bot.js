@@ -92,10 +92,10 @@ client.on("ready", async () => {//when the bot first logs in
                 else if(cachedPost.content===data.unspoilerMessage) {
                   unspoilerCollector(artMessage, cachedPost, true);
                   reinitializedPosts++;}
-                else {
+                else {//if it got this far and nothing matched, edit post with unwatch message
                   await cachedPost.edit({content: data.genericEndMessage});
-                  droppedPosts++;//drop 1 so that the number doesn't increment in this case
-                }//if it got this far and somehow nothing matched, edit post with unwatch message
+                  droppedPosts++;//drop 1 - different tracking number
+                }
               }
             }
           }
@@ -104,7 +104,7 @@ client.on("ready", async () => {//when the bot first logs in
       processed++;//count processed links after all ifs/awaits (tracks whether the loop is done)
       if(processed === cachedLinks.length)  {
         //after processing it all, log count and dump file
-        console.log(`Restarted monitoring of ${reinitializedPosts} ` + (reinitializedPosts===1 ? "post" : "posts" + "!"));
+        console.log(`Restarting monitoring of ${reinitializedPosts} ` + (reinitializedPosts===1 ? "post" : "posts" + "!"));
         //if any were simply dropped
         if(droppedPosts>0) console.log(`Edited ${droppedPosts} untracked ` + (droppedPosts===1 ? "post" : "posts" + "!"));
         fs.writeFile(helpers.filename, "", (err)=>{if(err) console.log(err);})//log error if any

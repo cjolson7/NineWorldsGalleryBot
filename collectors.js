@@ -21,7 +21,7 @@ const artCollector = async (artMessage, botResponse, reinitialize) => {
 
     //tracking variables for reinitialization case
     var reinitialized = false;//reinitialization loop stopper
-    var collectorNeeded = true; //whether to run the collector at all - defaults true
+    var collectorNeeded = true; //whether to run the primary post collector - defaults true
     
     //set up emoji tracker variables
     var yesDetected=false; 
@@ -53,9 +53,8 @@ const artCollector = async (artMessage, botResponse, reinitialize) => {
                         console.log("Skipping collector. Sufficient data detected on reinitialization.")
                         collectorNeeded = false;
                     } else if(yesDetected && (spoilerDetected || unspoiler)){
-                        console.log("Only secondary collector needed.")
-                        //TODO: skip check so that it knows to stop the collector immediately in the next block
-                        //something is weird here, it doesn't like moving on from this when it should
+                        console.log("Skipping primary collector. Initiating secondary collector.")
+                        collectorNeeded = false;
                     }
                 };
                 reinitialized = true;
@@ -86,7 +85,6 @@ const artCollector = async (artMessage, botResponse, reinitialize) => {
         });
 
         collector.on('remove', (reaction) => {
-            console.log("remove detected!")//see if remove runs on reinitialize
             if (yesDetected && reaction.emoji.name === helpers.yEmoji) yesDetected=false; //toggle detector vars on remove
             if (spoilerDetected && reaction.emoji.name === helpers.spoilerEmoji) spoilerDetected=false;
             if (victoriaDetected && reaction.emoji.name === helpers.victoriaEmoji) victoriaDetected=false;
@@ -111,27 +109,10 @@ const artCollector = async (artMessage, botResponse, reinitialize) => {
             if(reason === 'time' && !yesDetected){replaceMessage = data.timeout}//indicate timeout stop if no 🇾 response
             else if(reason === 'user' || (reason === 'time' && yesDetected)){//when a user stops the collector, or it times out with yes, post the image and edit the message
             
-            //   var confirmationMessage = data.noMessage; //default response is no 
-            var spoilerTag; //needs to exist as blank even when not updated
+                var spoilerTag; //needs to exist as blank even when not updated
 
-            if(unspoiler){//unspoiler clarification check follows from earlier logic check
-
-                //edits the prompt and reacts to its own message
-                await botResponse.edit({content: data.unspoilerMessage})
-                botResponse.react(helpers.yesEmoji); 
-                botResponse.react(helpers.noEmoji); 
-
-                //run response collector, return unspoiler and collector tracking (false for initialization)
-                unspoiler = await unspoilerCollector(artMessage, botResponse, false);
-                //unspoiler is reused safely because it gets a new default in the collector function
-            }
-            else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
-                await botResponse.edit({content: data.spoilerMessage})//edit its message to ask for spoiler text
-                botResponse.react(helpers.nEmoji); //add reaction
-
-                //run response collector, return unspoiler and collector tracking (false for initialization)
-                spoilerTag = await spoilerCollector(artMessage, botResponse, false);
-                }
+                //run secondary collectors based on the logical flags, return info if any
+                [unspoiler, spoilerTag] = await secondaryCollectors(unspoiler, spoilerDetected, botResponse, artMessage);
             
                 //feed all collected data into finish and post function!
                 finishAndPost(reason, artMessage, botResponse, yesDetected, spoilerDetected, victoriaDetected, unspoiler, spoilerTag);//make the post!
@@ -139,11 +120,39 @@ const artCollector = async (artMessage, botResponse, reinitialize) => {
 
         });
     }else if(reinitialize){//if collector wasn't needed, finish here
-        //if reinitializing without needing clarification, spoilerTag and unspoiler aren't relevant - default them just in case
+        //spoilerTag and unspoiler aren't relevant if clarification isn't needed - default them just in case
         var unspoiler, spoilerTag;
-        unspoiler = false;
+
+        //check secondary collector conditions and run those if applicable
+        if(spoilerDetected || unspoiler) [unspoiler, spoilerTag] = await secondaryCollectors(unspoiler, spoilerDetected, botResponse, artMessage);
+        
         finishAndPost(data.manualEndReason, artMessage, botResponse, yesDetected, spoilerDetected, victoriaDetected, unspoiler, spoilerTag);//make the post!
     }
+}
+
+const secondaryCollectors = async(unspoiler, spoilerDetected, botResponse, artMessage) => {
+    //takes in the logical conditions, the bot's response for reacts/edits, and the art post to pass to the collector
+    var spoilerTag;//create variables in negative state
+
+    if(unspoiler){//if unspoiler logic is in effect (spoilered image but not asked to spoiler)
+            //edits the prompt and reacts to its own message
+            await botResponse.edit({content: data.unspoilerMessage})
+            botResponse.react(helpers.yesEmoji); 
+            botResponse.react(helpers.noEmoji); 
+    
+            //run response collector, return unspoiler and collector tracking (false for initialization)
+            unspoiler = await unspoilerCollector(artMessage, botResponse, false);
+            //unspoiler is reused safely because it gets a new default in the collector function
+        }
+        else if(spoilerDetected){//if they chose spoiler, ask them for a spoiler tag to use
+            await botResponse.edit({content: data.spoilerMessage})//edit its message to ask for spoiler text
+            botResponse.react(helpers.nEmoji); //add reaction
+    
+            //run response collector, return unspoiler and collector tracking (false for initialization)
+            spoilerTag = await spoilerCollector(artMessage, botResponse, false);
+        }
+
+    return [unspoiler, spoilerTag]
 }
 
 const finishAndPost = async(reason, artMessage, botResponse, yesDetected, spoilerDetected, victoriaDetected, unspoiler, spoilerTag)=>{
