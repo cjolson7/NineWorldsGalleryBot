@@ -89,7 +89,8 @@ const data = {
             const [crossMessageId, crossChannelId] = data.parseLink(crossLink);
 
             const crossChannel = await interaction.client.channels.fetch(crossChannelId); //get channel
-            return await crossChannel.messages.fetch(crossMessageId); //get post and return
+            try{return await crossChannel.messages.fetch(crossMessageId);} //get post and return if found 
+            catch{return}//(else return nothing)
         }else{
             return;//return nothing if no crosspost link
         }

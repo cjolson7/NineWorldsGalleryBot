@@ -22,11 +22,15 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspo
         messageAttachments.forEach(async attachment => { //prep each image into a file array with spoilers as necessary
 
             var imageUrl = attachment.url; //get url of actual image
+            console.log("link: "+imageUrl)
             var filename = (imageUrl.split('/')).pop(); //get the last chunk of the filename as the actual image name
+
+            //there may be ? and parameters in the image url - detect and drop these
+            if (filename.includes("?")) filename = filename.replace(/\?.*$/, "")
             
             if (spoiler &&  !filename.startsWith("SPOILER_")) filename = "SPOILER_" + filename; //if it needs to be spoilered and isn't already, add the spoilerflag to the filename
             else if (!spoiler && unspoiler && filename.startsWith("SPOILER_")) filename = filename.replace("SPOILER_", "");//if it needs to be unspoilered, remove "SPOILER_"
-            
+
             imageFiles.push({
                 attachment:imageUrl,
                 name: filename})//add image to array
