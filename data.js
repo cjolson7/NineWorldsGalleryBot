@@ -25,11 +25,11 @@ const helpers = {
   
 const data = {
     artResponseMessage: (artistId) => {return "Hi, <@" + artistId + `>! It looks like you posted some art! Please react with ${helpers.yEmoji} if you want me to put it in my gallery. ` +
-        "(You can edit it there later if you'd like.)\n\n" +
         `You can use ${helpers.spoilerEmoji} to tell me to spoiler it when I post it. You don't have to spoiler Nine Worlds content in the galleries, but if there's something NSFW or potentially ` +
-        "upsetting, please do use a spoiler and tag the reason. (I ask for spoiler tags before posting, and you can /edit them in later if needed!)"+
+        "upsetting, please do use a spoiler and tag the reason. (I ask for spoiler tags before posting, or you can add them in later!)"+
         `If you add ${helpers.victoriaEmoji}, I\'ll share it with Victoria as well.\n\n`+
-    	`When you're done reacting, or if you don't want me to post, please click ${helpers.checkEmoji} to tell me to move on.`},
+    	`When you're done reacting, or if you don't want me to post, please click ${helpers.checkEmoji} to tell me to move on.`+
+        `\n\nTo learn more about how I work, including how to edit or delete your work in the gallery, just ask me with /helper!`},
     noMessage: "Okay, I won't post this image to the gallery. Thanks for telling me!",
     noImageMessage: "Sorry, I don't see any images there for me to record.",
     yesMessage: (spoiler, links)=>{ //posting message is dependent on the spoiler toggle and post links
@@ -37,7 +37,7 @@ const data = {
         if(postLinks.length>1){yesMessage+=`[both](<${links[0]}>) [galleries](<${links[1]}>)`}
         else{yesMessage+=`the [gallery](<${links[0]}>)`} //one or both post links
         if (spoiler) yesMessage += ". I made sure to spoiler it"; //extension
-        yesMessage +=". If you need to fix things later, you can always use /edit!"; //end
+        yesMessage +=". If you need to fix things later, you can use /edit to make changes to your own art posts, or /helper to ask me questions."; //end
         return yesMessage; 
     },
     unspoilerMessage: "You didn't ask me to add spoilers, but at least one image here is already spoilered. Would you like me to post your art with all image spoilers removed?\n\n"+
