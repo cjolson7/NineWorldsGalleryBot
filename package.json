@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {"start": "node bot.js"},
+  "scripts": {
+    "start": "node bot.js",
+    "deploy": "node deploy-commands.js"
+    },
   "author": "",
   "license": "ISC",
   "dependencies": {
