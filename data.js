@@ -24,12 +24,12 @@ const helpers = {
 }
   
 const data = {
-    artResponseMessage: (artistId) => {return "Hi, <@" + artistId + `>! It looks like you posted some art! Please react with ${helpers.yEmoji} if you want me to put it in my gallery. ` +
+    artResponseMessage: (artistId) => {return "Hi, <@" + artistId + `>! It looks like you posted some art! Please react with ${helpers.yEmoji} if you want me to put it in my gallery.  \n\n ` +
         `You can use ${helpers.spoilerEmoji} to tell me to spoiler it when I post it. You don't have to spoiler Nine Worlds content in the galleries, but if there's something NSFW or potentially ` +
-        "upsetting, please do use a spoiler and tag the reason. (I ask for spoiler tags before posting, or you can add them in later!)"+
-        `If you add ${helpers.victoriaEmoji}, I\'ll share it with Victoria as well.\n\n`+
-    	`When you're done reacting, or if you don't want me to post, please click ${helpers.checkEmoji} to tell me to move on.`+
-        `\n\nTo learn more about how I work, including how to edit or delete your work in the gallery, just ask me with /helper!`},
+        "upsetting, please do use a spoiler and tag the reason. (I'll ask for spoiler tags before posting, or you can add them later.) "+
+        `If you add ${helpers.victoriaEmoji}, I\'ll share it with Victoria as well.`+
+        `\n\nIf you'd like to learn more about how I work, including how to edit or delete your work in the gallery, you can ask me by sending '/helper' to any channel!`+
+    	`\n\nWhen you're done reacting, or if you don't want me to post, please click ${helpers.checkEmoji} to tell me to move on.`},
     noMessage: "Okay, I won't post this image to the gallery. Thanks for telling me!",
     noImageMessage: "Sorry, I don't see any images there for me to record.",
     yesMessage: (spoiler, links)=>{ //posting message is dependent on the spoiler toggle and post links
