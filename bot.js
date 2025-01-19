@@ -123,12 +123,14 @@ client.on("messageCreate", async pingMessage => {//respond to messages where the
 
     if (repliedTo){//if there is a reply reference, find the reply message
       const flaggedMessage = await pingChannel.messages.fetch(repliedTo.messageId);
-      if (flaggedMessage.attachments.size > 0 && flaggedMessage.author.id!=process.env.BOTID){
-        artMessage = flaggedMessage;} //if there is an image in the ref message, and it wasn't posted by this bot, choose that message
+      if (flaggedMessage.author.id!=process.env.BOTID){ //if the reference image was not by the bot
+        if(flaggedMessage.attachments.size > 0 || data.hasValidArtLink(flaggedMessage.content)) { // if post has at least one attachment or a valid link
+          artMessage = flaggedMessage;} // reply has something postable, choose that message
+      }
     }
 
-    //if there wasn't a reply, or wasn't art in the reply, we're still on the ping message - check image and author again before proceeding
-    if (artMessage.attachments.size > 0 && artMessage.author.id!=process.env.BOTID) {
+    //if there wasn't a reply, or wasn't art in the reply, we're still on the ping message - check image/link and author again before proceeding
+    if (artMessage.author.id!=process.env.BOTID && (artMessage.attachments.size > 0 || data.hasValidArtLink(artMessage.content))) {
 
       artMessage.reply(data.artResponseMessage(artMessage.author.id)).then(async (botResponse) => {//send the message, including user reference
           botResponse.react(helpers.yEmoji);

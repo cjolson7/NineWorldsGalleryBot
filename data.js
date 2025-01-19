@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { spoiler } = require('discord.js');
 const fs = require('node:fs');
 
 const helpers = {
@@ -21,8 +22,17 @@ const helpers = {
             message].join("/"); //discord links have a standard format
     },
     filename: 'watchedPosts.txt',
+    regexBeforeLink: "([", //pieces of a regex (allows spoiler check to be added)
+    regexAfterLink: "]*)",//spoiler is a greedier search, allows text around, so it needs some extra editing at the ends to add those spaces
+    regexSpoiler: "(\\|\\|)", //extra escape characters survive string-to-regex conversion
+    regexLink: "-a-zA-Z0-9@:%._\\+~#=\\/\\/]){1,256}(tumblr|youtube)\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=", // extra sites can be added with (siteA|siteB) in the 'youtube' block
 }
-  
+
+const artLinkRegex = new RegExp(helpers.regexBeforeLink + helpers.regexLink +  helpers.regexAfterLink, "i");
+const spoilerLinkRegex = new RegExp(helpers.regexSpoiler + helpers.regexBeforeLink + 
+    " " + helpers.regexLink + " " + helpers.regexAfterLink + helpers.regexSpoiler, "i")
+    //the spaces allow the search to be greedier by allowing " " into the anysearch (so there can be words before or after link in the spoiled text)   
+
 const data = {
     artResponseMessage: (artistId) => {return "Hi, <@" + artistId + `>! It looks like you posted some art! Please react with ${helpers.yEmoji} if you want me to put it in my gallery. ` +
         "(You can edit it there later if you'd like.)\n\n" +
@@ -30,17 +40,17 @@ const data = {
         "upsetting, please do use a spoiler and tag the reason. (I ask for spoiler tags before posting, and you can /edit them in later if needed!)"+
         `If you add ${helpers.victoriaEmoji}, I\'ll share it with Victoria as well.\n\n`+
     	`When you're done reacting, or if you don't want me to post, please click ${helpers.checkEmoji} to tell me to move on.`},
-    noMessage: "Okay, I won't post this image to the gallery. Thanks for telling me!",
-    noImageMessage: "Sorry, I don't see any images there for me to record.",
+    noMessage: "Okay, I won't post this art to the gallery. Thanks for telling me!",
+    noImageMessage: "Sorry, I don't see anything there for me to record.",
     yesMessage: (spoiler, links)=>{ //posting message is dependent on the spoiler toggle and post links
-        var yesMessage = "Okay, your image is posted to "; //basic text
+        var yesMessage = "Okay, your art is posted to "; //basic text
         if(postLinks.length>1){yesMessage+=`[both](<${links[0]}>) [galleries](<${links[1]}>)`}
         else{yesMessage+=`the [gallery](<${links[0]}>)`} //one or both post links
         if (spoiler) yesMessage += ". I made sure to spoiler it"; //extension
         yesMessage +=". If you need to fix things later, you can always use /edit!"; //end
         return yesMessage; 
     },
-    unspoilerMessage: "You didn't ask me to add spoilers, but at least one image here is already spoilered. Would you like me to post your art with all image spoilers removed?\n\n"+
+    unspoilerMessage: "You didn't ask me to add spoilers, but at least part of your post is already spoilered. Would you like me to post your art with the image spoilers removed?\n\n"+
         `Please tell me ${helpers.yesEmoji} or ${helpers.noEmoji}`,
     spoilerMessage: "Do you want to add a spoiler tag to the gallery post? You can reply to this post with the spoiler tag.\n\n"+
         `If you use ${helpers.nEmoji} (or ignore me long enough), I'll move on without a tag.`,
@@ -50,7 +60,14 @@ const data = {
     manualEndReason:"manualPost",
     day: 24*helpers.hour,//24 hours
     ephemeralTimeout: helpers.hour/2, //half an hour
-    linkRegex: /^https:\/\/discord.com\/channels\/[0-9]{17,19}\/[0-9]{17,19}\/[0-9]{17,19}\/?$/,
+    linkRegex: /^https:\/\/discord.com\/channels\/[0-9]{17,19}\/[0-9]{17,19}\/[0-9]{17,19}\/?$/,//tester for specifically a discord message link (separate from general art link regex)
+    hasValidArtLink: (message)=>{ //tester for a link with an approved art posting site contained in message (any format, case insensitive)
+        return artLinkRegex.test(message);
+    },
+    hasSpoilerArtLink: (message)=>{ //same tester as valid art link but requires spoiler bars around the section of text containing link (more text on either side allowed)
+        console.log(spoilerLinkRegex) //tester
+        return spoilerLinkRegex.test(message);
+    },
     parseLink: (link)=>{
         var fields = link.split('/')//discord links are a series of ids separated by slashes - discord/server/channel/message
         const messageId = fields.pop(); //id is the last field 
@@ -95,14 +112,20 @@ const data = {
             return;//return nothing if no crosspost link
         }
     },
-    unspoilerCheck: (attachments)=>{
-        //check unspoiler logic for some image attachments
-        var unspoiler = false;
-        const filenames = attachments.map((a)=>{return a.url.split('/').pop()}) //array of filenames
-        const spoilerFiles = filenames.filter(file => file.includes("SPOILER_")); //subset of array that contains the number that are already spoilered
-        if(spoilerFiles.length>0){unspoiler = true;} //spoiler on image even though spoiler not selected - unspoiler condition is flagged
+    unspoilerCheck: (attachments, content)=>{//take both image attachments and message content (might be a link)
+        var unspoiler = false; //default
+        //if there are *not* attachments, it's because there's a link - check that first
+        if (!(attachments)){
+            //test content - detect valid link that has spoiler pipes around it - true or false
+            unspoiler = hasSpoilerArtLink(content)
+        }else{
+            //check unspoiler logic for some image attachments
+            const filenames = attachments.map((a)=>{return a.url.split('/').pop()}) //array of filenames
+            const spoilerFiles = filenames.filter(file => file.includes("SPOILER_")); //subset of array that contains the number that are already spoilered
+            if(spoilerFiles.length>0){unspoiler = true;} //spoiler on image even though spoiler not selected - unspoiler condition is flagged
+        }
         return unspoiler;
     }
 }
 
-module.exports = {data, helpers};
+module.exports = {data, helpers, artLinkRegex};

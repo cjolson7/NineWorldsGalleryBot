@@ -48,7 +48,7 @@ const artCollector = async (artMessage, botResponse, reinitialize) => {
             if(processed === botResponse.reactions.cache.size)  {
                 if (doneDetected){//done is the basic prereq - if done, check whether clarification is needed
                     //done without Yes, or Yes + Done without spoiler or unspoiler
-                    var unspoiler = data.unspoilerCheck(artMessage.attachments);//check unspoiler status
+                    var unspoiler = data.unspoilerCheck(artMessage.attachments, artMessage.content);//check unspoiler status
                     if(!yesDetected || (yesDetected && !spoilerDetected && !unspoiler)){
                         console.log("Skipping collector. Sufficient data detected on reinitialization.")
                         collectorNeeded = false;
@@ -96,7 +96,7 @@ const artCollector = async (artMessage, botResponse, reinitialize) => {
 
             //check unspoiler status (break up status and collector creation to make file tracking possible)
             if(yesDetected && !spoilerDetected){//if they did *not* spoiler (but they did say yes, it doesn't otherwise matter) check if any images are spoilered
-                unspoiler = data.unspoilerCheck(artMessage.attachments);
+                unspoiler = data.unspoilerCheck(artMessage.attachments, artMessage.content);
             };
 
             //check if there's going to be another collector opening up
