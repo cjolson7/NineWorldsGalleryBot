@@ -64,7 +64,7 @@ client.on("ready", async () => {//when the bot first logs in
   var processed = 0; 
 
   //connect to message list file on startup and parse the discord links
-  fs.readFile(helpers.filename, async (err, contents) => {if(err) console.log(err);//log error if any
+  fs.readFile(helpers.filename, async (err, contents) => { if(err) console.log(err);//log error if any
     var cachedLinks = contents.toString().replaceAll("\r","").split("\n");//trim and split to make neat list
       cachedLinks.forEach(async link => {//try each link
       if(data.linkRegex.test(link)){//check if the link parses
