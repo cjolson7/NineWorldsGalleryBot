@@ -11,7 +11,10 @@ module.exports = {
 		//command and explanation text
 		const initialResponse = 'Hi! My job is to record your art!\n\n'+
 		"If you ping me in an image post or in a reply to an image post, I can add that image to my gallery.\n\n"+
-		"You can click the buttons to learn more about how I work.";
+			"You can click the buttons to learn more about how I work.";
+		const slashCommandText = "A /command, or slash command, is a way to call a Discord bot for a task that it's programmed to do.\n\n"+		
+			"If you go to a channel where the bot has access (pretty much anywhere in this server, for me!) and type the command, the bot will come and perform that command.\n\n" +
+			"I have several /commands, and you can click the buttons to learn about them!"
 		const editText = "If you use /edit and give me a link to one of your art posts in either of my galleries, I can fix it for you!\n\n"+
 			"I can only edit the art posts in my galleries, and only when /edit is used by the original artist credited in the gallery post.\n\n"+	
 			"Currently I can change or remove titles, descriptions, and spoiler tags.\n\n"+
@@ -20,6 +23,10 @@ module.exports = {
 		const deleteText = "If you use /delete and give me a link to one of your art posts in one of my galleries, I can remove it for you!\n\n"+
 			`Currently this command removes crossposted art from both galleries. `+
 			`If you want to remove only Victoria's copy of a post, you can /delete both and have me repost.`;
+		const shareText = "When I'm called to a piece of art and the artist lets me share it, I always put it in my main gallery. If I'm given permission, I will also put it in Victoria's gallery so she can see.\n\n" +
+			"I do it that way so that my main gallery is as complete an archive as I can make it.\n\n" +
+			"If for any reason you want to share your art that's only in the main gallery to Victoria later, I can do that with my /share command!\n\n" + 
+			"Just give me a link to the piece in the main gallery, and I'll crosspost it for you." 
 		const spoilerText = "Sometimes I need clarification about what people want me to do with spoilers, to make sure my gallery is as well organized as possible.\n\n"+
 			"You don't need to spoiler Nine Worlds content in my galleries, but please do spoiler nsfw or potentially upsetting material.\n\n"+
 			"If you don't ask me to spoiler an image but it's spoilered in the original post, I'll offer to remove the spoiler. This won't change anything else about the image.\n\n"+
@@ -42,10 +49,20 @@ module.exports = {
 
 		//set up array of explanations and buttonids for easy iteration (done is a special case and does not need to be in here)
 		const buttonData = [[{id:'more', content: moreText}],
-			[{id:'edit', content: editText}, {id:'delete', content: deleteText}, {id:'spoiler', content: spoilerText}],
-			[{id:'timeout', content: timeoutText}, {id:'userid', content: userText}, {id:'offline', content: offlineText}]];
+			[
+				{id:'/commands', content: slashCommandText},
+				{id:'/edit', content: editText},
+				{id:'/share', content: shareText},
+				{id:'/delete', content: deleteText},
+			],
+			[
+				{id:'spoiler', content: spoilerText},
+				{id:'timeouts', content: timeoutText},
+				{id:'userid', content: userText},
+				{id:'offline', content: offlineText},
+			]];
 		//only 5 buttons allowed in a row, and one is "more"
-		//two sets of three is even right now, could get up to 4 in a row before adding another
+		//up to 4 in a row before needing another
 
 		//set up buttons - labels are arbitrary/visual, but ids are referenced again later
 		const moreButton = new ButtonBuilder()
@@ -53,41 +70,62 @@ module.exports = {
 			.setLabel('More Buttons')
 			.setStyle(ButtonStyle.Primary);
 
-		const editButton = new ButtonBuilder()
-			.setCustomId(buttonData[1][0].id)
-			.setLabel('/edit')
-			.setStyle(ButtonStyle.Secondary)
+		var buttonRowOne = []
+		buttonData[1].forEach((data => {
+			buttonRowOne.push(
+				new ButtonBuilder()
+					.setCustomId(data.id)
+					.setLabel(data.id)
+					.setStyle(ButtonStyle.Secondary)
+			)			
+		}))
 
-		const deleteButton = new ButtonBuilder()
-			.setCustomId(buttonData[1][1].id)
-			.setLabel('/delete')
-			.setStyle(ButtonStyle.Secondary);
+		var buttonRowTwo = []
+		buttonData[2].forEach((data => {
+			buttonRowTwo.push(
+				new ButtonBuilder()
+					.setCustomId(data.id)
+					.setLabel(data.id)
+					.setStyle(ButtonStyle.Secondary)
+			)			
+		}))
 
-		const spoilerButton = new ButtonBuilder()
-			.setCustomId(buttonData[1][2].id)
-			.setLabel('spoilers')
-			.setStyle(ButtonStyle.Secondary);
+		// const editButton = new ButtonBuilder()
+			// .setCustomId(buttonData[1][0].id)
+			// .setLabel('/edit')
+			// .setStyle(ButtonStyle.Secondary)
 
-		const timeoutButton = new ButtonBuilder()
-			.setCustomId(buttonData[2][0].id)
-			.setLabel('timeouts')
-			.setStyle(ButtonStyle.Secondary);
+		// const deleteButton = new ButtonBuilder()
+			// .setCustomId(buttonData[1][1].id)
+			// .setLabel('/delete')
+			// .setStyle(ButtonStyle.Secondary);
 
-		const userButton = new ButtonBuilder()
-			.setCustomId(buttonData[2][1].id)
-			.setLabel('user ids')
-			.setStyle(ButtonStyle.Secondary);
+		// const spoilerButton = new ButtonBuilder()
+			// .setCustomId(buttonData[1][2].id)
+			// .setLabel('spoilers')
+			// .setStyle(ButtonStyle.Secondary);
 
-		const offlineButton = new ButtonBuilder()
-		.setCustomId(buttonData[2][2].id)
-		.setLabel("offline")
-		.setStyle(ButtonStyle.Secondary);
+		// const timeoutButton = new ButtonBuilder()
+			// .setCustomId(buttonData[2][0].id)
+			// .setLabel('timeouts')
+			// .setStyle(ButtonStyle.Secondary);
+// 
+		// const userButton = new ButtonBuilder()
+			// .setCustomId(buttonData[2][1].id)
+			// .setLabel('user ids')
+			// .setStyle(ButtonStyle.Secondary);
+// 
+		// const offlineButton = new ButtonBuilder()
+		// .setCustomId(buttonData[2][2].id)
+		// .setLabel("offline")
+		// .setStyle(ButtonStyle.Secondary);
 
 
-		const buttonRow1 = new ActionRowBuilder()
-			.addComponents(moreButton, editButton, deleteButton, spoilerButton);
-		const buttonRow2 = new ActionRowBuilder()
-			.addComponents(moreButton, timeoutButton, userButton, offlineButton);
+		// const buttonRow1 = new ActionRowBuilder()
+		// 	.addComponents(moreButton, editButton, deleteButton, spoilerButton);
+		const buttonRow1 = new ActionRowBuilder().addComponents(moreButton, ...buttonRowOne)
+		const buttonRow2 = new ActionRowBuilder().addComponents(moreButton, ...buttonRowTwo);
+			// .addComponents(moreButton, timeoutButton, userButton, offlineButton);
 		const buttonRows = [buttonRow1, buttonRow2]; //list makes them iterable with currentRow-1 as index
 		var currentRow = 1; //start on row 1, switch on more
 
