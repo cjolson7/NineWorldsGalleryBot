@@ -20,6 +20,12 @@ const helpers = {
             channel,
             message].join("/"); //discord links have a standard format
     },
+    getFilenameFromLink: (link) => {
+        var filename = link.split('/').pop(); //get the last chunk of the filename as the actual image name  
+        //there may be ? and parameters in the image url - detect and drop these
+        if (filename.includes("?")) filename = filename.replace(/\?.*$/, "") 
+        return filename;
+       },
     filename: 'watchedPosts.txt',
 }
   
