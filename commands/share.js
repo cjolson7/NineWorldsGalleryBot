@@ -2,7 +2,7 @@ require('dotenv').config();
 const moment = require('moment');
 const {data, helpers} = require('../data.js');
 const galleryLinkErrors = require('../galleryLinkErrors.js').galleryLinkErrors;
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -40,60 +40,89 @@ module.exports = {
 			return //end
 		}  
 
-		//if not returned for error, proceed with sharing
+		//if not returned for error, ask them to confirm
+		//set up cancel buttons
+		const confirm = new ButtonBuilder()
+			.setCustomId('share')
+			.setLabel('Share With Victoria')
+			.setStyle(ButtonStyle.Primary)
 
-		var embedData = galleryPost.embeds[0].data //get original embed data
-		const timestamp = moment(embedData.timestamp).valueOf()//parse and convert to unix stamp for reuse
+		const cancel = new ButtonBuilder()
+			.setCustomId('cancel')
+			.setLabel('Cancel')
+			.setStyle(ButtonStyle.Secondary);
 
-		const newEmbed = new EmbedBuilder() //preserve old data in embed format
-			.setColor(embedData.color)
-			.setTimestamp(timestamp)
-			.setFields(embedData.fields)
+		const buttonRow = new ActionRowBuilder()
+			.addComponents(confirm, cancel);
 
-		//save description if one was present
-		if (embedData.description) newEmbed.setDescription(embedData.description)
-		console.log(embedData)
-
-		//update links for new post
-		var originalLinks = embedData.fields.find(f => f.name === "Links" ).value;
-		const originalAndGalleryLinks = originalLinks+ ` / [Gallery](${galleryLink})`;
-
-		newEmbed.data.fields.find(f => f.name === "Links").value = originalAndGalleryLinks; //add links
-
-		//preserve images
-		var attachments = galleryPost.attachments;
-		imageFiles = [] 
-		attachments.forEach(async image => {
-			imageUrl = image.url,
-			filename = helpers.getFilenameFromLink(imageUrl)
-			imageFiles.push({
-				attachment: imageUrl,  
-				name: filename
-			})
-		});
-
-		//find victoria's gallery channel 
-		var victoriaLink
-		const victoriaChannel = await interaction.client.channels.cache.get(process.env.VICTORIACHANNELID);
-
-		//post to channel and get link
-		await victoriaChannel.send({
-			embeds: [newEmbed],
-			files: imageFiles,
-		}).then(sent => {
-			victoriaLink = helpers.generateLink(process.env.GUILDID, process.env.VICTORIACHANNELID, sent.id)
-		})
-
-		//format links
-		var originalAndNewLinks = originalLinks+ ` / [Victoria's Gallery](${victoriaLink})`;
-		
-		//edit old post with link
-		newEmbed.data.fields.find(f => f.name === "Links").value = originalAndNewLinks;
-		galleryPost.edit({ embeds: [newEmbed] });
-
-		await interaction.reply({//success response
-			content: `Alright, how does that look? ${victoriaLink}`,
+		await interaction.reply({
+			content: `Are you sure that you want to share [this post](${galleryLink}) to Victoria's gallery?`,
+			components: [buttonRow],
 			ephemeral: true
-		});
-	},
-};
+		}).then((sent)=>{
+			const buttonCollector = sent.createMessageComponentCollector({ time: data.ephemeralTimeout });//30 min timeout
+			buttonCollector.on('collect', async buttonInteraction => { 
+
+				var buttonInteractionText;
+
+				if (buttonInteraction.customId === 'cancel') {
+					buttonInteractionText = "Alright, I won't share it!"
+				}
+				else if (buttonInteraction.customId === 'share') {
+
+					var embedData = galleryPost.embeds[0].data //get original embed data
+					const timestamp = moment(embedData.timestamp).valueOf()//parse and convert to unix stamp for reuse
+
+					const newEmbed = new EmbedBuilder() //preserve old data in embed format
+						.setColor(embedData.color)
+						.setTimestamp(timestamp)
+						.setFields(embedData.fields)
+
+					//save description if one was present
+					if (embedData.description) newEmbed.setDescription(embedData.description)
+
+					//update links for new post
+					var originalLinks = embedData.fields.find(f => f.name === "Links" ).value;
+					const originalAndGalleryLinks = originalLinks+ ` / [Gallery](${galleryLink})`;
+
+					newEmbed.data.fields.find(f => f.name === "Links").value = originalAndGalleryLinks; //add links
+
+					//preserve images
+					var attachments = galleryPost.attachments;
+					imageFiles = [] 
+					attachments.forEach(async image => {
+						imageUrl = image.url,
+						filename = helpers.getFilenameFromLink(imageUrl)
+						imageFiles.push({
+								attachment: imageUrl,  
+							name: filename
+						})
+					});
+
+					//find victoria's gallery channel 
+					var victoriaLink
+					const victoriaChannel = await interaction.client.channels.cache.get(process.env.VICTORIACHANNELID);
+
+					//post to channel and get link
+					await victoriaChannel.send({
+						embeds: [newEmbed],
+						files: imageFiles,
+					}).then(sent => {
+						victoriaLink = helpers.generateLink(process.env.GUILDID, process.env.VICTORIACHANNELID, sent.id)
+					})
+
+					//format links
+					var originalAndNewLinks = originalLinks+ ` / [Victoria's Gallery](${victoriaLink})`;
+					
+					//edit old post with link
+					newEmbed.data.fields.find(f => f.name === "Links").value = originalAndNewLinks;
+					galleryPost.edit({ embeds: [newEmbed] });
+
+					buttonInteractionText = `Alright, how does that look? ${victoriaLink}`;
+				}
+				await buttonInteraction.update({ content: buttonInteractionText, components: [] })//remove buttons and update with comfirm text
+			});
+				
+		}); 
+	}
+}
