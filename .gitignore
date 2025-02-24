@@ -4,6 +4,9 @@ watchedPosts.txt
 #config file specific to production
 .npmrc 
 
+#production trash folder
+.trash/*
+
 #env
 .env
 
