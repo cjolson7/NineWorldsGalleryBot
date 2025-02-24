@@ -4,7 +4,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {data, helpers} = require('./data.js');
 const {artCollector, startUp, unspoilerCollector, spoilerCollector} = require('./collectors.js');
-//const postImage = require('./postImage.js').postImage;
 
 const client = new Client({//set up basic context with relevant action permissions
 	intents: [
