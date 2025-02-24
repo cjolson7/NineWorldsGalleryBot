@@ -1,8 +1,9 @@
 #list of watched posts (specific to local instance)
 watchedPosts.txt
 
-#config file specific to production
+#config files specific to production
 .npmrc 
+.lesshst
 
 #production trash folder
 .trash/*
