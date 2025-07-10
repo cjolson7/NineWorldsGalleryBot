@@ -58,7 +58,7 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspo
         var galleryLink;
         var galleryPost;
         var victoriaLink;
-        var errorMessage;
+        var errorMessage="";
         try{
             await postingChannels[0].send(artPost).then(sent => { //make link to posted message
             galleryLink = helpers.generateLink(process.env.GUILDID, process.env.GALLERYCHANNELID, sent.id)
