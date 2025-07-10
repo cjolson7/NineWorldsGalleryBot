@@ -54,6 +54,12 @@ const data = {
     genericEndMessage: "I am no longer watching this message. Please call me again if you need me!",
     spoilerField:"Spoiler Tag",//don't change this one, field names should be stable!
     manualEndReason:"manualPost",
+    postErrorMessage: (error) => 
+    `It appears that I've encountered an unknown error while posting.\n\n`+
+    `The error was: "${error}."\n\n`+
+    `If you call for <@294339718869417984>, they should be able to help.\n\n`,
+    sizeError: "Request entity too large",
+    sizeErrorMessage: "I'm sorry, but it looks like this piece is larger than Discord will let me post. I'd be happy to try again with a smaller version!",
     day: 24*helpers.hour,//24 hours
     ephemeralTimeout: helpers.hour/2, //half an hour
     linkRegex: /^https:\/\/discord.com\/channels\/[0-9]{17,19}\/[0-9]{17,19}\/[0-9]{17,19}\/?$/,

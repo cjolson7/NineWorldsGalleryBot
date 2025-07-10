@@ -37,7 +37,7 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspo
         const embed = new EmbedBuilder() //embed posts tagged data, making the gallery entry nice and clean and updatable as needed
             .setColor("#d81b0e")//discord win red
             //.setDescription(messageContent.length > 0 ? messageContent : "Some amazing fanart!")//default description (currently none)
-            .addFields({ name: "Artist", value: `<@${artistId}>`})//the author's discord id
+            .addFields({ name: "Artist", value: `<@${artistId}>`})//the author's discord id   
             .setTimestamp(artMessage.createdTimestamp);//timestamp of original post
 
         //parse and add description
@@ -58,28 +58,47 @@ async function postImage(artMessage, postingChannels, spoiler, spoilerTag, unspo
         var galleryLink;
         var galleryPost;
         var victoriaLink;
-        await postingChannels[0].send(artPost).then(sent => { //make link to posted message
+        var errorMessage;
+        try{
+            await postingChannels[0].send(artPost).then(sent => { //make link to posted message
             galleryLink = helpers.generateLink(process.env.GUILDID, process.env.GALLERYCHANNELID, sent.id)
             galleryPost = sent; //save first post
         });
+        }
+        catch(error){
+         errorMessage = error.rawError.message
+        }
 
-        if (postingChannels.length>1){//if more than one channel keep going
-            var originalLink = embed.data.fields.find(f => f.name === "Links").value
-            artPost.embeds[0].data.fields.find(f => f.name === "Links").value = originalLink +  ` / [Gallery](${galleryLink})`;
-            
-            await postingChannels[1].send(artPost).then(sent => { //make link
-                victoriaLink = helpers.generateLink(process.env.GUILDID, process.env.VICTORIACHANNELID, sent.id)
-                //now edit the original post with this data
-                embed.data.fields.find(f => f.name === "Links").value = originalLink +  ` / [Victoria's Gallery](${victoriaLink})`;
-                galleryPost.edit({ embeds: [embed] });//edit first post
-            });
+        //if no error, and multiple channels, try the other post
+        if (errorMessage.length<1 && postingChannels.length>1){
+            try{
+                //if no error and more than one channel keep going
+                var originalLink = embed.data.fields.find(f => f.name === "Links").value
+                artPost.embeds[0].data.fields.find(f => f.name === "Links").value = originalLink +  ` / [Gallery](${galleryLink})`;
+                
+                await postingChannels[1].send(artPost).then(sent => { //make link
+                    victoriaLink = helpers.generateLink(process.env.GUILDID, process.env.VICTORIACHANNELID, sent.id)
+                    //now edit the original post with this data
+                    embed.data.fields.find(f => f.name === "Links").value = originalLink +  ` / [Victoria's Gallery](${victoriaLink})`;
+                    galleryPost.edit({ embeds: [embed] });//edit first post
+                });
+            }
+            catch(error){
+                errorMessage = error.rawError.message
+            }
         }
     }
 
-    //return from posting with the correct confirmation message
-    postLinks = [galleryLink] //formulate and return post links, incl. victoria if applicable
-    if(victoriaLink) postLinks.push(victoriaLink)
-    return data.yesMessage(spoiler, postLinks);//formulate the message based on link count / spoilers
+    //if no error, /return from posting with the correct confirmation message
+    if (errorMessage.length<1) {
+        postLinks = [galleryLink] //formulate and return post links, incl. victoria if applicable
+        if(victoriaLink) postLinks.push(victoriaLink)
+        return data.yesMessage(spoiler, postLinks);//formulate the message based on link count / spoilers
+    }
+    else {
+        if (errorMessage == data.sizeError) return data.sizeErrorMessage
+        else return data.postErrorMessage(errorMessage)
+    } 
 }
       
 module.exports={postImage};
