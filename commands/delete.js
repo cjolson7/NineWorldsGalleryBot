@@ -58,7 +58,7 @@ module.exports = {
 					buttonInteractionText = "Okay, I won't delete it!";
 				}
 	
-				await buttonInteraction.update({ content: buttonInteractionText, components: [] })//remove buttons and update with comfirm text
+				await buttonInteraction.update({ content: buttonInteractionText, components: [] })//remove buttons and update with confirm text
 			});
 	
 	
