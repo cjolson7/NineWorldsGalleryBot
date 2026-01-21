@@ -50,6 +50,8 @@ const data = {
         `Please tell me ${helpers.yesEmoji} or ${helpers.noEmoji}`,
     spoilerMessage: "Do you want to add a spoiler tag to the gallery post? You can reply to this post with the spoiler tag.\n\n"+
         `If you use ${helpers.nEmoji} (or ignore me long enough), I'll move on without a tag.`,
+    shareMessagePart1: (artist, link)=> {return `Hi, <@${artist}>! I've been asked to share your [art piece](${link}) in my gallery with Victoria!\n\n`},
+    shareMessagePart2: `If you're alright with me sharing it, please react with ${helpers.yesEmoji}. If you don't want me to do anything, you can ignore me or react with ${helpers.noEmoji}.`,
     timeout: "I've timed out, so I won't take responses here. Call me again if you need me!",
     genericEndMessage: "I am no longer watching this message. Please call me again if you need me!",
     spoilerField:"Spoiler Tag",//don't change this one, field names should be stable!

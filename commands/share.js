@@ -64,7 +64,7 @@ module.exports = {
 
 			
 		// check whether the interactor is the original post author
-    	if (post.embeds[0].data.fields.find(f => f.name === "Artist").value.includes(interaction.user.id)) {
+    	if (galleryPost.embeds[0].data.fields.find(f => f.name === "Artist").value.includes(interaction.user.id)) {
 
 			//if they're the author, ask if they're sure, then post
 			await interaction.reply({
@@ -105,15 +105,70 @@ module.exports = {
 
 					var buttonInteractionText;
 					if (buttonInteraction.customId === 'ask') {
-						buttonInteractionText = "Okay, I've asked them!";
 
-						// code to go ask
+						//create success and failure text
+						successInteractionText = "Okay, I've asked them!";
+						failureInteractionText = "Sorry, I couldn't find the original art post, so I'm having trouble checking with the creator. You might have to ask them to try sharing or reposting."
 
+						buttonInteractionText = failureInteractionText
+						//default response is the failure text
+
+						// find original post using regex
+						const regex = /\[Original\]\(([^\)]+)/;
+						const matches = galleryPost.embeds[0].data.fields.find(f => f.name === "Links").match(regex);
+						
+						// if no match, default text is used and nothing more is done
+						if (matches && matches.length>1) {
+							//group 1 is just the link, 0 is everything used to find it 
+							originalLink = matches[1] 
+							var [messageId, channelId] = data.parseLink(originalLink);
+							var originalPost
+
+							try{ originalPost = await channel.messages.fetch(messageId); 
+							} catch { 
+							}; // use default on fail - same message as no match 
+
+							if (originalPost) { //verify that a post was found
+							
+								buttonInteractionText = successInteractionText;
+
+								//reply to original art post
+								replyText = data.shareMessagePart1(			originalPost.author.id, galleryLink) + data.shareMessagePart2
+
+								originalPost.reply(replyText).then(async (botResponse) => {//add emoji to message
+
+									await buttonInteraction.update({ content: buttonInteractionText, components: [] })//resolve interaction after message is sent
+
+          							botResponse.react(helpers.yesEmoji);
+          							botResponse.react(helpers.noEmoji);
+
+									//initialize collector
+									const consentGiven = await collectors.shareCollector(botResponse)
+
+									yesText = `Alright, I've [shared it](${victoriaLink}) with Victoria!`
+									noText = `Alright, I won't share [this post]${galleryLink} with Victoria.`
+
+									//if success, share and edit
+									if (response){
+										victoriaLink = await shareWithVictoria(galleryPost);
+										replaceMessage = yesText;
+									}
+									else replaceMessage = noText;
+										
+									//edit its own post now that it's done
+									await botResponse.edit({content: replaceMessage, embeds: []})
+									
+									return //end
+
+								})
+							}
+						}
 					}
 					else if (buttonInteraction.customId == 'cancel') {
 						buttonInteractionText = "Okay, I won't share the post with Victoria!";
 					}
 
+					//after everything, end the button interaction with the correct text
 					await buttonInteraction.update({ content: buttonInteractionText, components: [] })//remove buttons and update with confirm text
 				});
 			});
@@ -121,7 +176,7 @@ module.exports = {
 	}
 }
 
-function shareToVictoria(galleryPost) {
+async function shareWithVictoria(galleryPost) {
 
 	var embedData = galleryPost.embeds[0].data //get original embed data
 	const timestamp = moment(embedData.timestamp).valueOf()//parse and convert to unix stamp for reuse
