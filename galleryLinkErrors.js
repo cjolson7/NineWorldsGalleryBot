@@ -64,7 +64,8 @@ async function galleryLinkErrors(interaction, action){
         return //end
     }
 
-    if (!post.embeds[0].data.fields.find(f => f.name === "Artist").value.includes(interaction.user.id)) {//compare interaction.user.id to author id - only the author in the embed can make the edit
+    if (!post.embeds[0].data.fields.find(f => f.name === "Artist").value.includes(interaction.user.id) && action!="share") {//compare interaction.user.id to author id - by default, only the author in the embed can edit or delete 
+        //share is more complex and is skipped so it can be handled in its own code  
         await interaction.reply({//failure response
             content: `I'm sorry, but you can only ${action} art that you originally posted.`,
             ephemeral: true
