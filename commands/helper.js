@@ -26,7 +26,8 @@ module.exports = {
 		const shareText = "When I'm called to a piece of art and the artist lets me share it, I always put it in my main gallery. If I'm given permission, I will also put it in Victoria's gallery so she can see.\n\n" +
 			"I do it that way so that my main gallery is as complete an archive as I can make it.\n\n" +
 			"If for any reason you want to share your art that's only in the main gallery to Victoria later, I can do that with my /share command!\n\n" + 
-			"Just give me a link to the piece in the main gallery, and I'll crosspost it for you." 
+			"Just give me a link to the piece in the main gallery, and I'll crosspost it for you.\n\n" + 
+			"It even works if you're not the original artist, but I will ask them for permission before I post."
 		const spoilerText = "Sometimes I need clarification about what people want me to do with spoilers, to make sure my gallery is as well organized as possible.\n\n"+
 			"You don't need to spoiler Nine Worlds content in my galleries, but please do spoiler nsfw or potentially upsetting material.\n\n"+
 			"If you don't ask me to spoiler an image but it's spoilered in the original post, I'll offer to remove the spoiler. This won't change anything else about the image.\n\n"+
@@ -37,8 +38,9 @@ module.exports = {
 			"When I go offline and come back, I reset the timers for anything I'm still watching, so sometimes I might watch a post for a little longer.\n\n"+
 			"I edit posts once I'm no longer watching them so that no one gets confused.";
 		const userText = "I check discord user ids when I respond to art, and when I make gallery posts.\n\n"+
-			"Only the original poster of an image can consent for me to post it or ask me to edit or delete it. (The mods can always delete things, of course.)\n\n"+
-			"If someone else replies to or reacts to a post that I'm watching for the artist's answer, I'll just ignore them.";
+			"Only the original poster of an image can consent for me to post it or ask me to edit or delete it. (The mods can always delete things, though.)\n\n"+
+			"If someone else replies to or reacts to a post that I'm watching for the artist's answer, I'll just ignore them.\n\n"+
+			"The only exception is /share. For that, anyone can call it, but if they're not the artist, I'll ask the artist if they want me to share their post with Victoria."
 		const offlineText = "For obvious reasons, I can't detect emojis, pings, or replies while I'm offline for maintenance.\n\n"+
 			"However, I keep track of the posts I'm currently listening to whenever I go down, and I check their emojis when I come back online.\n\n"+
 			"Feel free to react to my posts at any time. Even if I'm not answering now, I'll get it later!\n\n"+
