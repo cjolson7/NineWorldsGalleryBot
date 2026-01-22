@@ -2,6 +2,7 @@ require('dotenv').config();
 const moment = require('moment');
 const {data, helpers} = require('../data.js');
 const galleryLinkErrors = require('../galleryLinkErrors.js').galleryLinkErrors;
+const shareCollector = require('../collectors.js').shareCollector;
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
@@ -95,7 +96,7 @@ module.exports = {
 		else {
 			// if they're not the author, ask if they're sure, then ask for permission, then post
 			await interaction.reply({
-				content: `You are not the original author of [this post](${link}. If you still want me to share it with Victoria, I can ask the artist for permission. )`,
+				content: `You are not the original author of [this post](${galleryLink}). If you still want me to share it with Victoria, I can ask the artist for permission. )`,
 				components: [askRow],
 				ephemeral: true
 			}).then((sent)=>{
@@ -115,17 +116,20 @@ module.exports = {
 
 						// find original post using regex
 						const regex = /\[Original\]\(([^\)]+)/;
-						const matches = galleryPost.embeds[0].data.fields.find(f => f.name === "Links").match(regex);
+						const matches = galleryPost.embeds[0].data.fields.find(f => f.name === "Links").value.match(regex);
 						
 						// if no match, default text is used and nothing more is done
 						if (matches && matches.length>1) {
 							//group 1 is just the link, 0 is everything used to find it 
-							originalLink = matches[1] 
+							originalLink = matches[1] //strip whitespace
+
 							var [messageId, channelId] = data.parseLink(originalLink);
 							var originalPost
+							
+							const galleryChannel = await interaction.client.channels.cache.get(galleryPost.channelId);
 
-							try{ originalPost = await channel.messages.fetch(messageId); 
-							} catch { 
+							try{ originalPost = await galleryChannel.messages.fetch(messageId); 
+							} catch (error) { console.log(error)
 							}; // use default on fail - same message as no match 
 
 							if (originalPost) { //verify that a post was found
@@ -133,27 +137,25 @@ module.exports = {
 								buttonInteractionText = successInteractionText;
 
 								//reply to original art post
-								replyText = data.shareMessagePart1(	originalPost.author.id, galleryLink) + data.shareMessagePart2
+								const artistId = originalPost.author.id
+								replyText = data.shareMessagePart1(	artistId, galleryLink) + data.shareMessagePart2
 
 								originalPost.reply(replyText).then(async (botResponse) => {//add emoji to message
 
-									await buttonInteraction.update({ content: buttonInteractionText, components: [] })//resolve interaction after message is sent
+									await buttonInteraction.update({ content: buttonInteractionText, components: []});//resolve interaction after message is sent
 
           							botResponse.react(helpers.yesEmoji);
           							botResponse.react(helpers.noEmoji);
 
 									//initialize collector
-									const consentGiven = await collectors.shareCollector(botResponse)
-
-									yesText = `Alright, I've [shared it](${victoriaLink}) with Victoria!`
-									noText = `Alright, I won't share [this post]${galleryLink} with Victoria.`
+									const consentGiven = await shareCollector(botResponse, artistId)
 
 									//if success, share and edit
-									if (response){
+									if (consentGiven){
 										victoriaLink = await shareWithVictoria(interaction, galleryPost);
-										replaceMessage = yesText;
+										replaceMessage = `Alright, I've [shared it](${victoriaLink}) with Victoria!`;
 									}
-									else replaceMessage = noText;
+									else replaceMessage = `Alright, I won't share [this post]${galleryLink} with Victoria.`;
 										
 									//edit its own post now that it's done
 									await botResponse.edit({content: replaceMessage, embeds: []})
@@ -166,10 +168,8 @@ module.exports = {
 					}
 					else if (buttonInteraction.customId == 'cancel') {
 						buttonInteractionText = "Okay, I won't share the post with Victoria!";
+						await buttonInteraction.update({ content: buttonInteractionText, components: [] })//remove buttons and update with confirm text
 					}
-
-					//after everything, end the button interaction with the correct text
-					await buttonInteraction.update({ content: buttonInteractionText, components: [] })//remove buttons and update with confirm text
 				});
 			});
 		}

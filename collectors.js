@@ -155,7 +155,7 @@ const secondaryCollectors = async(unspoiler, spoilerDetected, botResponse, artMe
     return [unspoiler, spoilerTag]
 }
 
-const shareCollector = async(botResponse, reinitialize) => {
+const shareCollector = async(botResponse, artistId) => {
     //takes the bot's post to ask for share permissions and waits for response
     // this one does Not reinitialize, because it is triggered from within a / command and that would create weird dependencies
 
@@ -164,10 +164,10 @@ const shareCollector = async(botResponse, reinitialize) => {
     var noResponse = false; // whether a negative answer is received - defaults false for no
 
     const collectorFilter = (reaction, user) => {//filter for specific emoji and original poster
-        return (reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji ) &&user.id === artMessage.author.id;
+        return (reaction.emoji.name === helpers.yesEmoji || reaction.emoji.name === helpers.noEmoji ) &&user.id === artistId;
     };
     const shareCollector = botResponse.createReactionCollector({ filter: collectorFilter, time: mainTimeout, dispose: true}); //watch the message for the right emoji
-    collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, reinitialize);//increment active collectors and report 
+    collectors = await data.collectorsUp(collectors, botResponse.channelId, botResponse.id, true);//increment active collectors and report (as if reinitializing, don't record)
     //don't add to file on reinitialization
 
     //end on detecting either response
@@ -177,7 +177,7 @@ const shareCollector = async(botResponse, reinitialize) => {
         
         //turn off the collector after any tracked emoji, as long as both aren't currently true
         if (yesResponse!=noResponse) {
-            collector.stop();
+            shareCollector.stop();
             finished=true
         }
     });
@@ -187,14 +187,14 @@ const shareCollector = async(botResponse, reinitialize) => {
         if (noResponse && reaction.emoji.name === helpers.noEmoji) yesResponse=false; 
 
         if (yesResponse!=noResponse) {//removing one of two the same should also count for ending
-            collector.stop();
+            shareCollector.stop();
             finished=true
         }
     });
 
     shareCollector.on('end', async ()=>{
         collectors = await data.collectorsDown(collectors, botResponse.channelId, botResponse.id, true);
-    });//decrement active collectors and report (edit file, no longer tracking post)    
+    });//decrement active collectors and report (as if reinitializing, don't edit file)   
 
     await data.waitFor(_ => finished === true);//waits for finished to be true, which happens when collectors have gotten their answers and closed
 
@@ -376,4 +376,4 @@ const spoilerCollector = async (artMessage, botResponse, reinitialize)=>{
     return spoilerTag;//return spoiler tag for use in posting
 }
 
-module.exports = {artCollector, unspoilerCollector, spoilerCollector, startUp};
+module.exports = {artCollector, unspoilerCollector, spoilerCollector, startUp, shareCollector};
