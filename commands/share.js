@@ -2,7 +2,7 @@ require('dotenv').config();
 const moment = require('moment');
 const {data, helpers} = require('../data.js');
 const galleryLinkErrors = require('../galleryLinkErrors.js').galleryLinkErrors;
-const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -79,17 +79,17 @@ module.exports = {
 					var buttonInteractionText;
 
 					if (buttonInteraction.customId === 'cancel') {
-						buttonInteractionText = "Alright, I won't share it!"
+						await buttonInteraction.update({ content: "Alright, I won't share it!", components: [] })//remove buttons and update with confirm text
 					}
 					else if (buttonInteraction.customId === 'share') {
 
-						victoriaLink = shareToVictoria(galleryPost)
+						await buttonInteraction.update({ content: "Alright, I'm sharing it!", components: [] })//remove buttons and update with confirm text
 
-						buttonInteractionText = `Alright, how does that look? ${victoriaLink}`;
+						victoriaLink = await shareWithVictoria(interaction, galleryPost)
+
+						await buttonInteraction.followUp({content: `How does that look? ${victoriaLink}`, flags: MessageFlags.Ephemeral});
 					}
-					await buttonInteraction.update({ content: buttonInteractionText, components: [] })//remove buttons and update with confirm text
 				});
-				
 			});
 		}
 		else {
@@ -133,7 +133,7 @@ module.exports = {
 								buttonInteractionText = successInteractionText;
 
 								//reply to original art post
-								replyText = data.shareMessagePart1(			originalPost.author.id, galleryLink) + data.shareMessagePart2
+								replyText = data.shareMessagePart1(	originalPost.author.id, galleryLink) + data.shareMessagePart2
 
 								originalPost.reply(replyText).then(async (botResponse) => {//add emoji to message
 
@@ -150,7 +150,7 @@ module.exports = {
 
 									//if success, share and edit
 									if (response){
-										victoriaLink = await shareWithVictoria(galleryPost);
+										victoriaLink = await shareWithVictoria(interaction, galleryPost);
 										replaceMessage = yesText;
 									}
 									else replaceMessage = noText;
@@ -176,7 +176,7 @@ module.exports = {
 	}
 }
 
-async function shareWithVictoria(galleryPost) {
+async function shareWithVictoria(interaction, galleryPost) {
 
 	var embedData = galleryPost.embeds[0].data //get original embed data
 	const timestamp = moment(embedData.timestamp).valueOf()//parse and convert to unix stamp for reuse
@@ -191,6 +191,7 @@ async function shareWithVictoria(galleryPost) {
 
 	//update links for new post
 	var originalLinks = embedData.fields.find(f => f.name === "Links" ).value;
+	const galleryLink = helpers.generateLink(process.env.GUILDID, process.env.GALLERYCHANNELID, galleryPost.id) //generate link from post
 	const originalAndGalleryLinks = originalLinks+ ` / [Gallery](${galleryLink})`;
 
 	newEmbed.data.fields.find(f => f.name === "Links").value = originalAndGalleryLinks; //add links
