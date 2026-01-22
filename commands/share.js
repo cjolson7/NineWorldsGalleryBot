@@ -124,11 +124,9 @@ module.exports = {
 							originalLink = matches[1] //strip whitespace
 
 							var [messageId, channelId] = data.parseLink(originalLink);
-							var originalPost
-							
-							const galleryChannel = await interaction.client.channels.cache.get(galleryPost.channelId);
+							var originalPost;
 
-							try{ originalPost = await galleryChannel.messages.fetch(messageId); 
+							try{ originalPost = await channelId.messages.fetch(messageId); 
 							} catch (error) { console.log(error)
 							}; // use default on fail - same message as no match 
 
