@@ -124,9 +124,11 @@ module.exports = {
 							originalLink = matches[1] //strip whitespace
 
 							var [messageId, channelId] = data.parseLink(originalLink);
-							var originalPost;
+							var originalPost
+							
+							const originalChannel = await interaction.client.channels.cache.get(channelId);
 
-							try{ originalPost = await channelId.messages.fetch(messageId); 
+							try{ originalPost = await originalChannel.messages.fetch(messageId); 
 							} catch (error) { console.log(error)
 							}; // use default on fail - same message as no match 
 
